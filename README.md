@@ -7,7 +7,7 @@
 
 **在线预览**: [https://xsfnb.pages.dev](https://xsfnb.pages.dev)
 
-![预览](1.png)
+![预览](https://duk.tw/jo6eZn.jpg)
 
 ---
 
