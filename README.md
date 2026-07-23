@@ -36,15 +36,15 @@
 
 ## 🛠️ 快速开始
 
-无需任何构建工具，直接打开 `index.html` 即可运行。
+无需任何构建工具，直接克隆代码并打开 `index.html` 即可运行：
 
 ```bash
 # 克隆仓库
-git clone https://github.com/xsfnb/myhome.git
+git clone [https://github.com/xsfnb/myhome.git](https://github.com/xsfnb/myhome.git)
 cd myhome
 
 # 直接用浏览器打开 index.html
-# 或使用静态服务器
+# 或使用静态服务器本地运行
 npx serve .
 ```
 
@@ -55,7 +55,7 @@ npx serve .
 在开始使用前，你需要完成以下个性化配置（所有占位符已用 `your-*` 标记）：
 
 ### 1️⃣ 替换个人信息
-- `your-site.com` → 你的网站域名（若无，可保留 `[https://your-site.com](https://your-site.com)`）
+- `your-site.com` → 你的网站域名（若无，可保留 `https://your-site.com`）
 - `your-email@example.com` → 你的联系邮箱
 - `Your Name` → 你的姓名
 - `Your favorite quote` → 你的座右铭
@@ -105,10 +105,10 @@ playlist: [
 
 ### 方式一：Cloudflare Pages（推荐，免费且快速）
 1. 下载源码解压到本地
-2. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com)，进入 **Pages** 菜单
-3. 点击 **创建项目** → **上传资产**（直接拖拽项目文件夹）
+2. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com)，进入 **Workers 和 Pages** 菜单
+3. 点击 **创建** → **Pages** → **上传资产**（直接拖拽项目文件夹）
 4. 项目名称自定义（如 `my-homepage`），点击 **上传并部署**
-5. 等待 1-2 分钟，获得 `[https://xxx.pages.dev](https://xxx.pages.dev)` 链接即可访问
+5. 等待 1-2 分钟，获得 `https://xxx.pages.dev` 链接即可访问
 6. **绑定自定义域名（可选）**：在项目后台的“自定义域”标签添加你的域名，按提示配置 CNAME 记录即可
 
 ### 方式二：GitHub Pages
@@ -162,5 +162,5 @@ playlist: [
 ## 🙏 致谢
 
 - [Font Awesome](https://fontawesome.com/) 提供图标支持
-- [WeatherAPI](https://www.weatherapi.com/) 提供天气数据 support
+- [WeatherAPI](https://www.weatherapi.com/) 提供天气数据支持
 - 灵感来自现代玻璃拟态设计趋势
