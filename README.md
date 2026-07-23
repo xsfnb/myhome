@@ -4,7 +4,7 @@
 
 **在线预览**: [https://xsfnb.pages.dev](https://xsfnb.pages.dev)
 
-![screenshot](1.png)
+![screenshot](https://duk.tw/jo6eZn.jpg)
 
 ## ✨ 特性
 
