@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+    <!-- ========== 请替换以下所有 your-xxx 为你的真实信息 ========== -->
+    <link rel="canonical" href="https://your-site.com/" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="description" content="Your Personal Homepage - Interactive with Music Player">
+    <meta name="keywords" content="personal homepage, music player, portfolio">
+    
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="Your Name | Interactive Personal Homepage">
+    <meta property="og:description" content="Listen to music, learn about my hobbies">
+    <meta property="og:url" content="https://your-site.com/">
+    <meta property="og:image" content="https://your-site.com/avatar.png">
+    
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "ProfilePage",
+          "@id": "https://your-site.com/#webpage",
+          "url": "https://your-site.com/",
+          "name": "Your Name | Interactive Personal Homepage",
+          "description": "Listen to music, learn about my hobbies",
+          "inLanguage": "en"
+        },
+        {
+          "@type": "Person",
+          "@id": "https://your-site.com/#person",
+          "name": "Your Name",
+          "alternateName": ["Your Nickname"],
+          "url": "https://your-site.com/",
+          "image": "https://your-site.com/avatar.png",
+          "email": "your-email@example.com",
+          "mainEntityOfPage": {
+            "@id": "https://your-site.com/#webpage"
+          }
+        }
+      ]
+    }
+    </script>
+    <!-- ========== 以上为需替换的元信息 ========== -->
+
+    <title>Your Name | Interactive Personal Homepage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <!-- 替换为你自己的 favicon -->
+    <link rel="icon" type="image/png" href="avatar.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="noise-overlay"></div>
+
+    <div class="preloader"><div class="spinner"></div></div>
+
+    <div class="glass-dock controls">
+        <button id="share-btn" class="control-btn" title="分享" aria-label="分享页面" role="button"><i class="fas fa-share-alt"></i></button>
+        <button id="theme-toggle" class="control-btn" title="切换主题" aria-label="切换主题" role="button"><i class="fas fa-sun"></i></button>
+        <div class="lang-switcher">
+            <button id="langBtn" class="control-btn" aria-label="切换语言" role="button"><i class="fas fa-language"></i></button>
+            <div class="lang-menu" id="langMenu">
+                <button data-lang="zh" role="menuitem">简中</button>
+                <button data-lang="zh-TW" role="menuitem">繁中</button>
+                <button data-lang="ja" role="menuitem">日本語</button>
+                <button data-lang="en" role="menuitem">English</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="bento-grid">
+        <div class="grid-item profile-card">
+            <div class="avatar-container">
+                <!-- 替换 src 为自己的头像图片路径 -->
+                <img src="avatar.png" alt="Your Avatar" class="avatar-img" onerror="this.onerror=null;this.src='https://placehold.co/120x120/cccccc/ffffff?text=Avatar';" loading="lazy">
+            </div>
+            <h1 class="name fade-text" data-key="name">Your Name</h1>
+        </div>
+
+        <div class="grid-item stats-card">
+            <div id="timeGreeting" class="stat-item fade-text">
+                <i class="fa-solid fa-clock"></i> <span class="skeleton" style="width: 100px;"></span>
+            </div>
+            <div id="weatherInfo" class="stat-item fade-text">
+                <i class="fa-solid fa-cloud-sun"></i> <span class="skeleton" style="width: 140px;"></span>
+            </div>
+            <div id="ipGreeting" class="stat-item fade-text">
+                <i class="fa-solid fa-location-dot"></i> <span class="skeleton" style="width: 120px;"></span>
+            </div>
+        </div>
+
+        <div class="grid-item contact-card">
+            <div class="section-title fade-text" data-key="contact">联系方式</div>
+            <!-- 替换邮箱地址 -->
+            <a class="email" href="mailto:your-email@example.com" data-key="email">your-email@example.com</a>
+        </div>
+
+        <!-- 音乐播放器 -->
+        <div class="grid-item music-card">
+            <audio id="bg-music" style="display: none;" type="audio/mpeg"></audio>
+            
+            <div id="playlist-popup" class="playlist-popup">
+                <div class="playlist-header">播放列表</div>
+                <ul class="playlist-list" id="playlist-list">
+                </ul>
+            </div>
+
+            <div class="custom-music-player">
+                <div class="control-group">
+                    <button class="prev-btn" aria-label="上一首" role="button"><i class="fas fa-step-backward"></i></button>
+                    <button class="play-pause-btn" aria-label="播放/暂停" role="button"><i class="fas fa-play"></i></button>
+                    <button class="next-btn" aria-label="下一首" role="button"><i class="fas fa-step-forward"></i></button>
+                    <button id="playlist-btn" class="playlist-btn" aria-label="播放列表" role="button" title="播放列表"><i class="fas fa-list"></i></button>
+                </div>
+                
+                <div class="player-controls">
+                    <div class="music-info">
+                        <div class="music-meta">
+                            <span class="music-icon-anim">
+                                <span></span><span></span><span></span>
+                            </span>
+                            <div class="music-title">Loading...</div>
+                        </div>
+                        <div class="time-display">
+                            <span class="current-time">0:00</span> / <span class="total-time">0:00</span>
+                        </div>
+                    </div>
+                    <div class="progress-bar-container" role="slider" aria-label="音乐进度">
+                        <div class="progress-bar"></div>
+                    </div>
+                </div>
+
+                <div class="volume-control-horizontal">
+                    <button class="control-btn volume-icon-btn" aria-label="音量静音切换" role="button">
+                        <i class="fas fa-volume-high"></i>
+                    </button>
+                    <input type="range" class="volume-slider-horizontal" min="0" max="1" step="0.01" value="1" aria-label="音量调节">
+                    <span class="volume-percent">100%</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid-item hobby-card">
+            <div class="hobby-content-wrapper">
+                <div class="section-title fade-text" data-key="hobbyTitle" style="margin-bottom: 0; margin-right: 2rem;">爱好</div>
+                <div class="hobby-content">
+                    <div class="hobby-icon-container">
+                        <div class="vinyl-record"></div>
+                        <div class="floating-notes">
+                            <i class="fas fa-music note note-1"></i>
+                            <i class="fas fa-music note note-2"></i>
+                            <i class="fas fa-music note note-3"></i>
+                        </div>
+                    </div>
+                    <span class="hobby-text" data-key="hobbyMusic">听音乐</span>
+                </div>
+            </div>
+        </div>
+        
+        <footer class="grid-item footer-card">
+            <!-- 替换为你喜欢的座右铭 -->
+            <p class="footer fade-text" data-key="footer">Your favorite quote here</p>
+        </footer>
+    </main>
+
+    <div class="scroll-indicator" id="scrollIndicator">
+        <span class="scroll-arrow">⌄</span>
+    </div>
+
+    <div id="toast" class="toast-notification"></div>
+    
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.27/bundled/lenis.min.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
