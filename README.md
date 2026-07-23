@@ -1,4 +1,5 @@
 # 🌧️ 夏雨天 | 动态交互式个人主页
+![访问人数](https://count.getloli.com/get/@xsfnb-myhome)
 
 一个采用 **Liquid Glass** 设计语言、支持空间交互与弹簧物理动画的个人主页。
 
