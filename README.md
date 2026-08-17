@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![GitHub stars](https://img.shields.io/github/stars/xsfnb/myhome)](https://github.com/xsfnb/myhome/stargazers)
 
-**在线预览**: [https://xsfnb.pages.dev](https://xsfnb.pages.dev)
+**在线预览**: [https://www.yutian.me](https://www.yutian.me)
 
 ![预览](https://duk.tw/jo6eZn.jpg)
 
