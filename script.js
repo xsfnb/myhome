@@ -1,3 +1,10 @@
+/*!
+ * 雨天 (yutian.me) 个人主页交互脚本
+ * 版权所有 © 2026 雨天 · 保留所有权利
+ * 源码: https://github.com/xsfnb/myhome
+ * 未经授权，禁止商用、二次修改或移除署名。
+ */
+
 /*
  * Liquid Glass & Spring Physics
  */
