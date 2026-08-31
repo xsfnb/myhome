@@ -200,7 +200,7 @@ document.addEventListener("DOMContentLoaded", () => {
             cards.forEach(card => observer.observe(card));
         },
 
-        // 「雨天」名字逐字浮现（split-text）
+        // 「示例用户」名字逐字浮现（split-text）
         initSplitText() {
             const nameEl = document.querySelector('.name');
             if (!nameEl) return;
@@ -496,10 +496,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
         initLanguage() {
             this.translations = {
-                zh: { name: "雨天", contact: "联系方式", email: "lizijapan@gmail.com", footer: "当回忆失去了情感，便成了记忆", morning: "早上好", noon: "中午好", evening: "晚上好", from: "你好, 来自 {country} 的朋友", unknown: "你好, 陌生人", weatherPrefix: "当前天气", weatherError: "天气加载失败", apiKeyError: "API密钥配置错误", linkCopied: "链接已复制！", hobbyTitle: "爱好", hobbyMusic: "听音乐", loading: "加载中...", musicLoadError: "音乐加载失败", projectTitle: "我的项目", projectName: "弹幕 · 在线弹幕墙", projectDesc: "基于 danmu_api，支持多平台弹幕获取与播放", projectName2: "我的主页 · 开源", projectDesc2: "本站源码已开源至 GitHub，欢迎 Star", projectName3: "Spectroid 汉化 · 液态玻璃 UI", projectDesc3: "音频频谱分析仪汉化补丁，纯 Python 零依赖" },
-                'zh-TW': { name: "雨天", contact: "聯絡方式", email: "lizijapan@gmail.com", footer: "當回憶失去了情感，便成了記憶", morning: "早上好", noon: "中午好", evening: "晚上好", from: "你好, 來自 {country} 的朋友", unknown: "你好, 陌生人", weatherPrefix: "當前天氣", weatherError: "天氣載入失敗", apiKeyError: "API金鑰配置錯誤", linkCopied: "連結已複製！", hobbyTitle: "愛好", hobbyMusic: "聽音樂", loading: "載入中...", musicLoadError: "音樂載入失敗", projectTitle: "我的專案", projectName: "彈幕 · 線上彈幕牆", projectDesc: "基於 danmu_api，支援多平台彈幕獲取與播放", projectName2: "我的主頁 · 開源", projectDesc2: "本站原始碼已開源至 GitHub，歡迎 Star", projectName3: "Spectroid 漢化 · 液態玻璃 UI", projectDesc3: "音頻頻譜分析儀漢化補丁，純 Python 零依賴" },
-                ja: { name: "雨天", contact: "連絡先", email: "lizijapan@gmail.com", footer: "思い出が感情を失うと、記憶になる", morning: "おはよう", noon: "こんにちは", evening: "こんばんは", from: "{country} からの訪問者様、こんにちは", unknown: "こんにちは、見知らぬ方", weatherPrefix: "現在の天気", weatherError: "天気の読み込みに失敗しました", apiKeyError: "APIキーの設定エラー", linkCopied: "リンクがコピーされました！", hobbyTitle: "趣味", hobbyMusic: "音楽鑑賞", loading: "読み込み中...", musicLoadError: "音楽の読み込みに失敗しました", projectTitle: "私のプロジェクト", projectName: "弾幕 · オンライン弾幕ウォール", projectDesc: "danmu_api ベース、多プラットフォームの弾幕取得に対応", projectName2: "私のホームページ · オープンソース", projectDesc2: "このサイトのソースコードを GitHub で公開中、Star よろしくお願いします", projectName3: "Spectroid 日本語化 · リキッドガラスUI", projectDesc3: "オーディオスペクトラムアナライザー日本語化パッチ、純Python依存なし" },
-                en: { name: "Yutian", contact: "Contact", email: "lizijapan@gmail.com", footer: "When memories lose emotion, they become memory", morning: "Good morning", noon: "Good afternoon", evening: "Good evening", from: "Hello, friend from {country}", unknown: "Hello, stranger", weatherPrefix: "Current weather", weatherError: "Failed to load weather", apiKeyError: "API key configuration error", linkCopied: "Link copied!", hobbyTitle: "Hobby", hobbyMusic: "Listening to Music", loading: "Loading...", musicLoadError: "Music load failed", projectTitle: "My Projects", projectName: "Danmu · Online Danmaku Wall", projectDesc: "Built on danmu_api, fetch danmaku from multiple platforms", projectName2: "My Homepage · Open Source", projectDesc2: "Source code of this site is open-sourced on GitHub, give it a Star", projectName3: "Spectroid L10n · Liquid Glass UI", projectDesc3: "Audio spectrum analyzer localization patch, pure Python, zero dependencies" }
+                zh: { name: "示例用户", contact: "联系方式", email: "example@example.com", footer: "当回忆失去了情感，便成了记忆", morning: "早上好", noon: "中午好", evening: "晚上好", from: "你好, 来自 {country} 的朋友", unknown: "你好, 陌生人", weatherPrefix: "当前天气", weatherError: "天气加载失败", apiKeyError: "API密钥配置错误", linkCopied: "链接已复制！", hobbyTitle: "爱好", hobbyMusic: "听音乐", loading: "加载中...", musicLoadError: "音乐加载失败", projectTitle: "我的项目", projectName: "弹幕 · 在线弹幕墙", projectDesc: "基于 danmu_api，支持多平台弹幕获取与播放", projectName2: "我的主页 · 开源", projectDesc2: "本站源码已开源至 GitHub，欢迎 Star", projectName3: "Spectroid 汉化 · 液态玻璃 UI", projectDesc3: "音频频谱分析仪汉化补丁，纯 Python 零依赖" },
+                'zh-TW': { name: "示例用户", contact: "聯絡方式", email: "example@example.com", footer: "當回憶失去了情感，便成了記憶", morning: "早上好", noon: "中午好", evening: "晚上好", from: "你好, 來自 {country} 的朋友", unknown: "你好, 陌生人", weatherPrefix: "當前天氣", weatherError: "天氣載入失敗", apiKeyError: "API金鑰配置錯誤", linkCopied: "連結已複製！", hobbyTitle: "愛好", hobbyMusic: "聽音樂", loading: "載入中...", musicLoadError: "音樂載入失敗", projectTitle: "我的專案", projectName: "彈幕 · 線上彈幕牆", projectDesc: "基於 danmu_api，支援多平台彈幕獲取與播放", projectName2: "我的主頁 · 開源", projectDesc2: "本站原始碼已開源至 GitHub，歡迎 Star", projectName3: "Spectroid 漢化 · 液態玻璃 UI", projectDesc3: "音頻頻譜分析儀漢化補丁，純 Python 零依賴" },
+                ja: { name: "示例用户", contact: "連絡先", email: "example@example.com", footer: "思い出が感情を失うと、記憶になる", morning: "おはよう", noon: "こんにちは", evening: "こんばんは", from: "{country} からの訪問者様、こんにちは", unknown: "こんにちは、見知らぬ方", weatherPrefix: "現在の天気", weatherError: "天気の読み込みに失敗しました", apiKeyError: "APIキーの設定エラー", linkCopied: "リンクがコピーされました！", hobbyTitle: "趣味", hobbyMusic: "音楽鑑賞", loading: "読み込み中...", musicLoadError: "音楽の読み込みに失敗しました", projectTitle: "私のプロジェクト", projectName: "弾幕 · オンライン弾幕ウォール", projectDesc: "danmu_api ベース、多プラットフォームの弾幕取得に対応", projectName2: "私のホームページ · オープンソース", projectDesc2: "このサイトのソースコードを GitHub で公開中、Star よろしくお願いします", projectName3: "Spectroid 日本語化 · リキッドガラスUI", projectDesc3: "オーディオスペクトラムアナライザー日本語化パッチ、純Python依存なし" },
+                en: { name: "Example User", contact: "Contact", email: "example@example.com", footer: "When memories lose emotion, they become memory", morning: "Good morning", noon: "Good afternoon", evening: "Good evening", from: "Hello, friend from {country}", unknown: "Hello, stranger", weatherPrefix: "Current weather", weatherError: "Failed to load weather", apiKeyError: "API key configuration error", linkCopied: "Link copied!", hobbyTitle: "Hobby", hobbyMusic: "Listening to Music", loading: "Loading...", musicLoadError: "Music load failed", projectTitle: "My Projects", projectName: "Danmu · Online Danmaku Wall", projectDesc: "Built on danmu_api, fetch danmaku from multiple platforms", projectName2: "My Homepage · Open Source", projectDesc2: "Source code of this site is open-sourced on GitHub, give it a Star", projectName3: "Spectroid L10n · Liquid Glass UI", projectDesc3: "Audio spectrum analyzer localization patch, pure Python, zero dependencies" }
             };
             this.currentLang = "zh";
             this.visitorCountry = null;
@@ -1087,8 +1087,8 @@ document.addEventListener("DOMContentLoaded", () => {
                 const parts = track.title.split('-');
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: parts[0] ? parts[0].trim() : track.title,
-                    artist: '雨天',
-                    album: '雨天的音乐集',
+                    artist: '示例用户',
+                    album: '示例用户的音乐集',
                     artwork: [{ src: '1.png', sizes: '512x512', type: 'image/png' }]
                 });
             }
@@ -1144,7 +1144,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 const musicCard = document.querySelector('.music-card');
                 if (musicCard) musicCard.classList.toggle('playing', isPlaying);
-                document.title = isPlaying ? `▶ ${this.playlist[this.currentTrackIndex].title}` : "雨天 | 动态交互式个人主页";
+                document.title = isPlaying ? `▶ ${this.playlist[this.currentTrackIndex].title}` : "示例用户 | 动态交互式个人主页";
             };
 
             const playTrack = (index) => {
