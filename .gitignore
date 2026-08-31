@@ -1,0 +1,21 @@
+# 系统与编辑器
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.tmp
+
+# 本地临时文件
+.chrome-test-profile/
+node_modules/
+*.log
+
+# 本地部署/缓存目录
+dist/
+.cache/
+
+# 音乐与视频文件（本地资源，不纳入版本管理）
+*.mp4
+*.mp3
+*.flac
+*.wav
+*.ogg

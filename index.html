@@ -1,18 +1,30 @@
 <!DOCTYPE html>
 <html lang="zh-CN" data-theme="dark">
 <head>
-    <!-- ========== 请替换以下所有 your-xxx 为你的真实信息 ========== -->
-    <link rel="canonical" href="https://your-site.com/" />
+    <link rel="canonical" href="https://www.yutian.me/" />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <meta name="description" content="Your Personal Homepage - Interactive with Music Player">
-    <meta name="keywords" content="personal homepage, music player, portfolio">
-    
+    <meta name="theme-color" id="theme-color-meta" content="#000000">
+    <script>
+        // 首帧前应用主题，避免深/浅色切换闪烁（FOUC）
+        (function () {
+            try {
+                var t = localStorage.getItem('theme') ||
+                    (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                document.documentElement.setAttribute('data-theme', t);
+                var m = document.getElementById('theme-color-meta');
+                if (m) m.setAttribute('content', t === 'light' ? '#f2f2f7' : '#000000');
+            } catch (e) { /* ignore */ }
+        })();
+    </script>
+    <meta name="description" content="雨天的个人主页，展示个人简介、社交链接和兴趣爱好。">
+    <meta name="keywords" content="雨天, 个人主页, 社交媒体, 音乐播放器">
+		
     <meta property="og:type" content="website">
-    <meta property="og:title" content="Your Name | Interactive Personal Homepage">
-    <meta property="og:description" content="Listen to music, learn about my hobbies">
-    <meta property="og:url" content="https://your-site.com/">
-    <meta property="og:image" content="https://your-site.com/avatar.png">
+    <meta property="og:title" content="雨天 | 动态交互式个人主页">
+    <meta property="og:description" content="在线听音乐、了解我的爱好">
+    <meta property="og:url" content="https://www.yutian.me/">
+    <meta property="og:image" content="https://www.yutian.me/1.png">
     
     <script type="application/ld+json">
     {
@@ -20,49 +32,67 @@
       "@graph": [
         {
           "@type": "ProfilePage",
-          "@id": "https://your-site.com/#webpage",
-          "url": "https://your-site.com/",
-          "name": "Your Name | Interactive Personal Homepage",
-          "description": "Listen to music, learn about my hobbies",
-          "inLanguage": "en"
+          "@id": "https://www.yutian.me/#webpage",
+          "url": "https://www.yutian.me/",
+          "name": "雨天 | 动态交互式个人主页",
+          "description": "在线听音乐、了解我的爱好",
+          "inLanguage": "zh-CN"
         },
         {
           "@type": "Person",
-          "@id": "https://your-site.com/#person",
-          "name": "Your Name",
-          "alternateName": ["Your Nickname"],
-          "url": "https://your-site.com/",
-          "image": "https://your-site.com/avatar.png",
-          "email": "your-email@example.com",
+          "@id": "https://www.yutian.me/#person",
+          "name": "雨天",
+          "alternateName": ["夏海", "Natsuumi"],
+          "url": "https://www.yutian.me/",
+          "image": "https://www.yutian.me/1.png",
+          "email": "lizijapan@gmail.com",
           "mainEntityOfPage": {
-            "@id": "https://your-site.com/#webpage"
+            "@id": "https://www.yutian.me/#webpage"
           }
         }
       ]
     }
     </script>
-    <!-- ========== 以上为需替换的元信息 ========== -->
 
-    <title>Your Name | Interactive Personal Homepage</title>
+    <title>雨天 | 动态交互式个人主页 - 在线听音乐、了解我的爱好</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-    <!-- 替换为你自己的 favicon -->
-    <link rel="icon" type="image/png" href="avatar.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
     <link rel="stylesheet" href="style.css">
+    <meta name="msvalidate.01" content="71D36B20BE80AD56889BB11DEECF99B5" />
 </head>
 <body>
     <div class="noise-overlay"></div>
 
-    <div class="preloader"><div class="spinner"></div></div>
+    <!-- 动态壁纸层：仅暗色模式显示；视频为主，智能降级到静态帧 -->
+    <div class="wallpaper" aria-hidden="true">
+        <video id="bg-video" class="bg-video" src="bg.mp4" muted loop playsinline preload="none" poster="bg_0.jpg"></video>
+        <div class="bg-image" style="background-image:url('bg_0.jpg')"></div>
+    </div>
+    <div class="wallpaper-overlay" aria-hidden="true"></div>
+
+    <!-- 访问加载动画：进度条 + 百分比，完成后左右帷幕分割拉开转场 -->
+    <div class="preloader" id="preloader" aria-hidden="true">
+        <div class="loader-panel loader-left"></div>
+        <div class="loader-panel loader-right"></div>
+        <div class="loader-center">
+            <div class="loader-avatar-wrap"><img src="touxiang.PNG" alt="" class="loader-avatar"></div>
+            <div class="loader-name">雨 天</div>
+            <div class="loader-bar"><div class="loader-fill" id="loaderFill"></div></div>
+            <div class="loader-pct" id="loaderPct">0%</div>
+        </div>
+    </div>
 
     <div class="glass-dock controls">
+        <button id="menu-btn" class="control-btn" title="菜单" aria-label="打开菜单" role="button" aria-expanded="false"><i class="fas fa-bars"></i></button>
         <button id="share-btn" class="control-btn" title="分享" aria-label="分享页面" role="button"><i class="fas fa-share-alt"></i></button>
         <button id="theme-toggle" class="control-btn" title="切换主题" aria-label="切换主题" role="button"><i class="fas fa-sun"></i></button>
+        <button id="wallpaper-toggle" class="control-btn" title="动态壁纸" aria-label="切换动态壁纸" role="button" aria-pressed="true"><i class="fas fa-film"></i></button>
         <div class="lang-switcher">
-            <button id="langBtn" class="control-btn" aria-label="切换语言" role="button"><i class="fas fa-language"></i></button>
-            <div class="lang-menu" id="langMenu">
+            <button id="langBtn" class="control-btn" aria-label="切换语言" aria-haspopup="menu" aria-expanded="false" role="button"><i class="fas fa-language"></i></button>
+            <div class="lang-menu" id="langMenu" role="menu">
                 <button data-lang="zh" role="menuitem">简中</button>
                 <button data-lang="zh-TW" role="menuitem">繁中</button>
                 <button data-lang="ja" role="menuitem">日本語</button>
@@ -71,13 +101,29 @@
         </div>
     </div>
 
+    <!-- 全屏导航菜单：点击 MENU 展开 -->
+    <div class="fullscreen-menu" id="fullscreenMenu" aria-hidden="true">
+        <div class="menu-bg"></div>
+        <button class="menu-close" id="menuClose" aria-label="关闭菜单"><i class="fas fa-times"></i></button>
+        <nav class="menu-list">
+            <a href="#profile" data-menu-item>主页</a>
+            <a href="#music" data-menu-item>音乐</a>
+            <a href="#project" data-menu-item>项目</a>
+            <a href="#contact" data-menu-item>联系</a>
+        </nav>
+        <div class="menu-footer">
+            <a href="https://github.com/xsfnb/myhome" target="_blank" rel="noopener noreferrer" aria-label="GitHub"><i class="fab fa-github"></i></a>
+            <a href="https://github.com/xsfnb/spectroid-hanhua" target="_blank" rel="noopener noreferrer" aria-label="GitHub Spectrum"><i class="fas fa-wave-square"></i></a>
+            <a href="mailto:lizijapan@gmail.com" aria-label="Email"><i class="fas fa-envelope"></i></a>
+        </div>
+    </div>
+
     <main class="bento-grid">
-        <div class="grid-item profile-card">
+        <div class="grid-item profile-card" id="profile">
             <div class="avatar-container">
-                <!-- 替换 src 为自己的头像图片路径 -->
-                <img src="avatar.png" alt="Your Avatar" class="avatar-img" onerror="this.onerror=null;this.src='https://placehold.co/120x120/cccccc/ffffff?text=Avatar';" loading="lazy">
+                <img src="touxiang.PNG" alt="雨天头像" class="avatar-img" fetchpriority="high" onerror="this.onerror=null;this.src='https://placehold.co/120x120/cccccc/ffffff?text=Avatar';">
             </div>
-            <h1 class="name fade-text" data-key="name">Your Name</h1>
+            <h1 class="name fade-text" data-key="name">雨天</h1>
         </div>
 
         <div class="grid-item stats-card">
@@ -92,15 +138,14 @@
             </div>
         </div>
 
-        <div class="grid-item contact-card">
+        <div class="grid-item contact-card" id="contact">
             <div class="section-title fade-text" data-key="contact">联系方式</div>
-            <!-- 替换邮箱地址 -->
-            <a class="email" href="mailto:your-email@example.com" data-key="email">your-email@example.com</a>
+            <a class="email" href="mailto:lizijapan@gmail.com" data-key="email" role="link">lizijapan@gmail.com</a>
         </div>
 
         <!-- 音乐播放器 -->
-        <div class="grid-item music-card">
-            <audio id="bg-music" style="display: none;" type="audio/mpeg"></audio>
+        <div class="grid-item music-card" id="music">
+            <audio id="bg-music" style="display: none;"></audio>
             
             <div id="playlist-popup" class="playlist-popup">
                 <div class="playlist-header">播放列表</div>
@@ -108,12 +153,13 @@
                 </ul>
             </div>
 
-            <div class="custom-music-player">
+            <div class="music-hobby-row">
+                <div class="custom-music-player">
                 <div class="control-group">
                     <button class="prev-btn" aria-label="上一首" role="button"><i class="fas fa-step-backward"></i></button>
                     <button class="play-pause-btn" aria-label="播放/暂停" role="button"><i class="fas fa-play"></i></button>
                     <button class="next-btn" aria-label="下一首" role="button"><i class="fas fa-step-forward"></i></button>
-                    <button id="playlist-btn" class="playlist-btn" aria-label="播放列表" role="button" title="播放列表"><i class="fas fa-list"></i></button>
+                    <button id="playlist-btn" class="playlist-btn" aria-label="播放列表" aria-haspopup="true" aria-expanded="false" role="button" title="播放列表"><i class="fas fa-list"></i></button>
                 </div>
                 
                 <div class="player-controls">
@@ -128,7 +174,7 @@
                             <span class="current-time">0:00</span> / <span class="total-time">0:00</span>
                         </div>
                     </div>
-                    <div class="progress-bar-container" role="slider" aria-label="音乐进度">
+                    <div class="progress-bar-container" role="slider" aria-label="音乐进度" tabindex="0" aria-valuemin="0" aria-valuemax="0" aria-valuenow="0">
                         <div class="progress-bar"></div>
                     </div>
                 </div>
@@ -141,28 +187,65 @@
                     <span class="volume-percent">100%</span>
                 </div>
             </div>
-        </div>
-
-        <div class="grid-item hobby-card">
-            <div class="hobby-content-wrapper">
-                <div class="section-title fade-text" data-key="hobbyTitle" style="margin-bottom: 0; margin-right: 2rem;">爱好</div>
-                <div class="hobby-content">
+                <div class="music-divider"></div>
+                <div class="hobby-inline">
                     <div class="hobby-icon-container">
-                        <div class="vinyl-record"></div>
+                        <div class="vinyl-record">
+                            <!-- 真专辑封面：从 FLAC 元数据读取，加载失败时隐藏露出假盘面 -->
+                            <img id="track-cover" class="track-cover" alt="专辑封面" onerror="this.style.display='none';">
+                        </div>
                         <div class="floating-notes">
                             <i class="fas fa-music note note-1"></i>
                             <i class="fas fa-music note note-2"></i>
                             <i class="fas fa-music note note-3"></i>
                         </div>
                     </div>
-                    <span class="hobby-text" data-key="hobbyMusic">听音乐</span>
+                    <div class="hobby-text-block">
+                        <div class="section-title fade-text" data-key="hobbyTitle">爱好</div>
+                        <span class="hobby-text fade-text" data-key="hobbyMusic">听音乐</span>
+                    </div>
                 </div>
             </div>
+
+            <!-- 常驻歌词区：解析 FLAC 内嵌 LRC，随播放滚动高亮当前行 -->
+            <div class="lyrics-area" id="lyrics-area">
+                <div class="lyrics-placeholder" id="lyrics-placeholder">暂无歌词</div>
+                <div class="lyrics-scroll" id="lyrics-scroll"></div>
+            </div>
         </div>
-        
+
+        <div class="grid-item project-card" id="project">
+            <div class="project-text">
+                <div class="section-title fade-text" data-key="projectTitle">我的项目</div>
+                <a class="project-link" href="https://danmu.yutian.me/danmu" target="_blank" rel="noopener noreferrer">
+                    <span class="project-link-icon"><i class="fas fa-comment-dots"></i></span>
+                    <span class="project-link-text">
+                        <span class="project-name fade-text" data-key="projectName">弹幕 · 在线弹幕墙</span>
+                        <span class="project-desc fade-text" data-key="projectDesc">基于 danmu_api，支持多平台弹幕获取与播放</span>
+                    </span>
+                    <span class="project-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a class="project-link" href="https://github.com/xsfnb/myhome" target="_blank" rel="noopener noreferrer">
+                    <span class="project-link-icon"><i class="fab fa-github"></i></span>
+                    <span class="project-link-text">
+                        <span class="project-name fade-text" data-key="projectName2">我的主页 · 开源</span>
+                        <span class="project-desc fade-text" data-key="projectDesc2">本站源码已开源至 GitHub，欢迎 Star</span>
+                    </span>
+                    <span class="project-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+                <a class="project-link" href="https://github.com/xsfnb/spectroid-hanhua" target="_blank" rel="noopener noreferrer">
+                    <span class="project-link-icon"><i class="fas fa-wave-square"></i></span>
+                    <span class="project-link-text">
+                        <span class="project-name fade-text" data-key="projectName3">Spectroid 汉化 · 液态玻璃 UI</span>
+                        <span class="project-desc fade-text" data-key="projectDesc3">音频频谱分析仪汉化补丁，纯 Python 零依赖</span>
+                    </span>
+                    <span class="project-arrow"><i class="fas fa-arrow-right"></i></span>
+                </a>
+            </div>
+        </div>
+
         <footer class="grid-item footer-card">
-            <!-- 替换为你喜欢的座右铭 -->
-            <p class="footer fade-text" data-key="footer">Your favorite quote here</p>
+            <p class="footer fade-text" data-key="footer">当回忆失去了情感，便成了记忆</p>
         </footer>
     </main>
 
@@ -170,9 +253,8 @@
         <span class="scroll-arrow">⌄</span>
     </div>
 
-    <div id="toast" class="toast-notification"></div>
+    <div id="toast" class="toast-notification" role="status" aria-live="polite"></div>
     
-    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.27/bundled/lenis.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
