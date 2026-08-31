@@ -1379,6 +1379,26 @@ audio {
 
 .footer-card:hover .footer { opacity: 1; }
 
+.footer-copyright {
+  margin-top: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  opacity: 0.75;
+  letter-spacing: 0.03em;
+}
+
+.footer-name-link {
+  color: var(--accent);
+  font-weight: 600;
+  text-decoration: none;
+  transition: opacity var(--duration-fast) ease;
+}
+
+.footer-name-link:hover {
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
 .toast-notification {
   position: fixed;
   bottom: -100px;
