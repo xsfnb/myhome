@@ -1,4 +1,4 @@
-﻿/*!
+/*!
  * 雨天 (yutian.me) 个人主页交互脚本
  * 版权所有 © 2026 雨天 · 保留所有权利
  * 源码: https://github.com/xsfnb/myhome
@@ -1085,6 +1085,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
             audio.onerror = () => {
                 console.error('Audio load error:', audio.error, 'Source:', track.src);
+                this._loadErrors = (this._loadErrors || 0) + 1;
                 let errText = '音乐加载失败';
                 if (audio.error) {
                     if (audio.error.code === 4) errText = '音频格式不受支持';
@@ -1092,6 +1093,21 @@ document.addEventListener("DOMContentLoaded", () => {
                     else if (audio.error.code === 3) errText = '音频解码错误';
                 }
                 const dict = this.translations[this.currentLang];
+
+                // 所有曲目都失败：多半是仓库/演示站里根本没放音频文件，
+                // 别再每 3 秒轮着报错，直接给一句人话提示。
+                if (this._loadErrors >= this.playlist.length) {
+                    title.textContent = '未找到音频文件';
+                    const ph = document.getElementById('lyrics-placeholder');
+                    const box = document.getElementById('lyrics-scroll');
+                    if (box) box.innerHTML = '';
+                    if (ph) {
+                        ph.textContent = '演示站未附带音频：把 mp3 / flac 放进根目录即可播放';
+                        ph.style.display = 'flex';
+                    }
+                    return;
+                }
+
                 title.textContent = (dict && dict.musicLoadError) ? dict.musicLoadError : errText;
                 setTimeout(() => {
                     if (audio.error) {
@@ -1102,6 +1118,7 @@ document.addEventListener("DOMContentLoaded", () => {
             };
 
             audio.oncanplay = () => {
+                this._loadErrors = 0;
                 title.textContent = track.title;
             };
 
