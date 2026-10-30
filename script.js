@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * 雨天 (yutian.me) 个人主页交互脚本
  * 版权所有 © 2026 雨天 · 保留所有权利
  * 源码: https://github.com/xsfnb/myhome
@@ -19,7 +19,7 @@ document.addEventListener("DOMContentLoaded", () => {
         ],
         currentTrackIndex: 0,
         lastScrollY: window.scrollY,
-        STORAGE_KEY: 'xsf_music_player_state',
+        STORAGE_KEY: 'xsf_music_player_state_v2',
 
         init() {
             document.body.classList.add('js'); // 用于 CSS 渐进增强（无 JS 时板块可见）
@@ -34,6 +34,128 @@ document.addEventListener("DOMContentLoaded", () => {
             this.initRipples();
             this.initDynamicControls();
             this.initFullscreenMenu();
+            this.initTopNav();
+            this.initSpectrum();
+            this.initScrollProgress();
+        },
+
+        // 顶部工具条：滚动高亮当前板块 + 滚动态（变暗/收起）
+        initTopNav() {
+            const nav = document.getElementById('topNav');
+            const bar = document.getElementById('topBar');
+            if (!nav) return;
+            const links = nav.querySelectorAll('[data-nav]');
+            // 按 DOM 文档顺序（profile→contact→music→project），scroll-spy 才能正确取当前板块
+            const sections = ['profile', 'contact', 'music', 'project']
+                .map(id => document.getElementById(id))
+                .filter(Boolean);
+            let lastY = window.scrollY;
+
+            const onScroll = () => {
+                const y = window.scrollY;
+                if (bar) {
+                    bar.classList.toggle('scrolled', y > 16);
+                    // 向下滚动收起顶栏，向上滚动立刻露出；顶部附近始终显示
+                    if (y <= 80) bar.classList.remove('hide');
+                    else if (y > lastY + 4) bar.classList.add('hide');
+                    else if (y < lastY - 4) bar.classList.remove('hide');
+                }
+                lastY = y;
+
+                let activeId = sections.length ? sections[0].id : null;
+                const docH = document.documentElement.scrollHeight;
+                // 只有页面确实可滚动时才启用「到底部高亮最后一节」，否则矮视口会误判
+                if (docH > window.innerHeight + 40 && y + window.innerHeight >= docH - 10 && sections.length) {
+                    activeId = sections[sections.length - 1].id;
+                } else {
+                    const offset = y + Math.min(120, window.innerHeight * 0.2); // 取视口顶部附近板块
+                    sections.forEach(s => {
+                        // 用绝对文档位置（offsetTop 可能相对 position:relative 的祖先，不准）
+                        const top = s.getBoundingClientRect().top + window.scrollY;
+                        if (top <= offset) activeId = s.id;
+                    });
+                }
+                links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + activeId));
+            };
+            window.addEventListener('scroll', onScroll, { passive: true });
+            window.addEventListener('resize', onScroll, { passive: true });
+            onScroll();
+        },
+
+        // 实时频谱可视化：Web Audio + canvas，播放时跳动
+        initSpectrum() {
+            const audio = document.getElementById('bg-music');
+            const canvas = document.getElementById('spectrum-canvas');
+            if (!audio || !canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+            // 适配尺寸
+            const resize = () => {
+                canvas.width = canvas.clientWidth * (window.devicePixelRatio || 1);
+                canvas.height = canvas.clientHeight * (window.devicePixelRatio || 1);
+            };
+            resize();
+            window.addEventListener('resize', resize);
+
+            let audioCtx = null, analyser = null, data = null, rafId = 0, running = false;
+            const setup = () => {
+                if (audioCtx || !audio.srcObject && audio.readyState === 0) { /* 无音频源时不建 */ }
+                if (audioCtx) return;
+                try {
+                    const AC = window.AudioContext || window.webkitAudioContext;
+                    audioCtx = new AC();
+                    const src = audioCtx.createMediaElementSource(audio);
+                    analyser = audioCtx.createAnalyser();
+                    analyser.fftSize = 128;
+                    analyser.smoothingTimeConstant = 0.8;
+                    src.connect(analyser);
+                    analyser.connect(audioCtx.destination);
+                    data = new Uint8Array(analyser.frequencyBinCount);
+                } catch (e) { /* ignore */ }
+            };
+            const draw = () => {
+                rafId = requestAnimationFrame(draw);
+                if (!analyser || !data) return;
+                analyser.getByteFrequencyData(data);
+                const W = canvas.width, H = canvas.height;
+                ctx.clearRect(0, 0, W, H);
+                const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#007aff';
+                const bars = 48;
+                const barW = W / bars;
+                ctx.fillStyle = accent;
+                for (let i = 0; i < bars; i++) {
+                    const v = data[i] / 255;
+                    const h = Math.max(2, v * H);
+                    ctx.globalAlpha = 0.25 + v * 0.75;
+                    ctx.fillRect(i * barW + 1, H - h, barW - 2, h);
+                }
+                ctx.globalAlpha = 1;
+            };
+            const start = () => {
+                setup();
+                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume().catch(() => {});
+                if (!running) { running = true; draw(); }
+            };
+            const stop = () => {
+                if (running) { running = false; cancelAnimationFrame(rafId); ctx.clearRect(0, 0, canvas.width, canvas.height); }
+            };
+            audio.addEventListener('play', start);
+            audio.addEventListener('pause', stop);
+            audio.addEventListener('ended', stop);
+        },
+
+        // 滚动进度条：读到哪里显示到哪里
+        initScrollProgress() {
+            const bar = document.getElementById('scrollProgress');
+            if (!bar) return;
+            const update = () => {
+                const h = document.documentElement.scrollHeight - window.innerHeight;
+                const p = h > 0 ? (window.scrollY / h) * 100 : 0;
+                bar.style.width = p + '%';
+            };
+            window.addEventListener('scroll', update, { passive: true });
+            window.addEventListener('resize', update, { passive: true });
+            update();
         },
 
         // ========== 空间交互引擎 ==========
@@ -49,18 +171,23 @@ document.addEventListener("DOMContentLoaded", () => {
         initTiltSystem() {
             const cards = document.querySelectorAll('.grid-item');
             cards.forEach(card => {
+                // 音乐卡里有播放列表浮层和滚动歌词：整卡 3D 倾斜会让浮层的命中区域
+                // 跟着平面偏移，导致鼠标点不到列表项。这张卡只保留高光跟随，不做倾斜。
+                const tiltable = !card.classList.contains('music-card');
                 card.addEventListener('mousemove', (e) => {
                     const rect = card.getBoundingClientRect();
                     const x = e.clientX - rect.left;
                     const y = e.clientY - rect.top;
+                    card.style.setProperty('--mouse-x', `${(x / rect.width) * 100}%`);
+                    card.style.setProperty('--mouse-y', `${(y / rect.height) * 100}%`);
+                    if (!tiltable) return;
                     const cx = rect.width / 2;
                     const cy = rect.height / 2;
                     const rx = ((y - cy) / cy) * -6;
                     const ry = ((x - cx) / cx) * 6;
                     card.style.transform = `perspective(1000px) rotateX(${rx}deg) rotateY(${ry}deg) translateZ(10px) scale(1.02)`;
-                    card.style.setProperty('--mouse-x', `${(x / rect.width) * 100}%`);
-                    card.style.setProperty('--mouse-y', `${(y / rect.height) * 100}%`);
                 }, { passive: true });
+                if (!tiltable) return;
                 card.addEventListener('mouseleave', () => {
                     card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) translateZ(0) scale(1)';
                     card.style.transition = 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1)';
@@ -230,15 +357,22 @@ document.addEventListener("DOMContentLoaded", () => {
                 menu.setAttribute('aria-hidden', 'false');
                 menuBtn.setAttribute('aria-expanded', 'true');
                 document.body.style.overflow = 'hidden';
+                // 打开时焦点落在关闭按钮（无障碍），等一帧确保菜单已显示
+                requestAnimationFrame(() => { try { menuClose.focus(); } catch (e) { /* ignore */ } });
             };
             const close = () => {
                 menu.classList.remove('open');
                 menu.setAttribute('aria-hidden', 'true');
                 menuBtn.setAttribute('aria-expanded', 'false');
                 document.body.style.overflow = '';
+                menuBtn.focus();
             };
             menuBtn.addEventListener('click', open);
             menuClose.addEventListener('click', close);
+            // Esc 键关闭
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && menu.classList.contains('open')) close();
+            });
             menu.querySelectorAll('[data-menu-item]').forEach(a => {
                 a.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -255,46 +389,28 @@ document.addEventListener("DOMContentLoaded", () => {
         initScrollIndicator() {
             const indicator = document.getElementById('scrollIndicator');
             if (!indicator) return;
-            indicator.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:100;opacity:0.6;pointer-events:none;transition:opacity 0.5s ease;';
-            const arrow = indicator.querySelector('.scroll-arrow');
-            if (arrow) {
-                arrow.style.cssText = 'display:block;font-size:20px;color:var(--text-secondary);animation:scrollBounce 2s infinite;';
-                if (!document.getElementById('scroll-anim-style')) {
-                    const style = document.createElement('style');
-                    style.id = 'scroll-anim-style';
-                    style.textContent = '@keyframes scrollBounce{0%,100%{transform:translateY(0);}50%{transform:translateY(6px);}}';
-                    document.head.appendChild(style);
-                }
-            }
-            window.addEventListener('scroll', () => {
-                if (indicator) indicator.style.opacity = window.scrollY > 30 ? '0' : '0.6';
-            }, { passive: true });
+            const onScroll = () => {
+                indicator.classList.toggle('is-hidden', window.scrollY > 40);
+            };
+            window.addEventListener('scroll', onScroll, { passive: true });
+            onScroll();
         },
 
         initDynamicControls() {
-            const controls = document.querySelector('.controls');
-            if (!controls) return;
-            window.addEventListener('scroll', () => {
-                const y = window.scrollY;
-                controls.classList.toggle('shrunk', y > this.lastScrollY && y > 50);
-                this.lastScrollY = Math.max(0, y);
-            }, { passive: true });
+            // 工具钮已并入顶栏，滚动态统一由 initTopNav 处理，这里不再缩放
         },
 
         initSharing() {
             const shareBtn = document.getElementById('share-btn');
-            const toast = document.getElementById('toast');
-            if (!shareBtn || !toast) return;
+            if (!shareBtn) return;
+            // 分享到 X（Twitter）：只保留 X，点按钮打开分享窗口
             shareBtn.addEventListener('click', () => {
-                navigator.clipboard.writeText(window.location.href).then(() => {
-                    toast.textContent = this.translations[this.currentLang].linkCopied;
-                    toast.classList.add('show');
-                    setTimeout(() => toast.classList.remove('show'), 2500);
-                }).catch(() => {
-                    toast.textContent = 'Error';
-                    toast.classList.add('show');
-                    setTimeout(() => toast.classList.remove('show'), 2500);
-                });
+                const url = encodeURIComponent(window.location.href);
+                const text = encodeURIComponent(document.title);
+                window.open(
+                    `https://twitter.com/intent/tweet?url=${url}&text=${text}`,
+                    '_blank', 'noopener,width=650,height=520'
+                );
             });
         },
 
@@ -306,7 +422,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
             const saved = localStorage.getItem('theme');
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-            // 移动端（竖屏窄视口）固定暗色主题背景（配合 CSS 隐藏动态壁纸）
+            // 移动端固定暗色主题（壁纸会换成竖版构图）
             const isMobile = window.matchMedia('(max-width: 768px)').matches;
             this.applyTheme(isMobile ? 'dark' : (saved || (prefersDark ? 'dark' : 'light')));
         },
@@ -319,115 +435,48 @@ document.addEventListener("DOMContentLoaded", () => {
             if (meta) meta.setAttribute('content', theme === 'light' ? '#f2f2f7' : '#000000');
         },
 
-        // ========== 动态壁纸（仅暗色模式） ==========
+        // ========== 静态壁纸（横/竖屏各两张，仅暗色模式显示） ==========
+        // 朝向由 CSS 媒体查询决定（wall-land-* / wall-port-*），
+        // JS 只负责在两张之间切换，并把选择记在 localStorage。
         initWallpaper() {
-            // 诊断日志放在最前面：即使元素缺失也能看到执行情况
-            console.log('[壁纸] initWallpaper 开始执行',
-                '| .wallpaper:', !!document.querySelector('.wallpaper'),
-                '| #bg-video:', !!document.getElementById('bg-video'),
-                '| #wallpaper-toggle:', !!document.getElementById('wallpaper-toggle'));
-
-            const wp = document.querySelector('.wallpaper');
-            const video = document.getElementById('bg-video');
+            const wp = document.getElementById('wallpaper');
             const toggle = document.getElementById('wallpaper-toggle');
-            if (!wp || !video || !toggle) {
-                console.warn('[壁纸] 壁纸层元素缺失，初始化中止');
-                return;
-            }
+            if (!wp || !toggle) return;
 
-            // 壁纸源：默认 bg.mp4，点击切换按钮循环到新壁纸
-            this.wallpapers = [
-                { src: 'bg.mp4', poster: 'bg_0.jpg', name: '壁纸 1' },
-                { src: 'yh_zhenhong.mp4', poster: 'bg_0.jpg', name: '壁纸 2' }
-            ];
-            this.wpSrcKey = 'wallpaper_src';
-            let srcSaved = null;
-            try { srcSaved = parseInt(localStorage.getItem(this.wpSrcKey), 10); } catch (e) { /* ignore */ }
-            this.wpIndex = (!isNaN(srcSaved) && srcSaved >= 0 && srcSaved < this.wallpapers.length) ? srcSaved : 0;
-            video.src = this.wallpapers[this.wpIndex].src;
-            video.poster = this.wallpapers[this.wpIndex].poster;
+            const KEY = 'wallpaper_pick';
+            let saved = 0;
+            try { saved = parseInt(localStorage.getItem(KEY), 10); } catch (e) { /* ignore */ }
+            this.wpAlt = saved === 1;
 
-            // 动态壁纸默认开启。移动端（<768 竖屏）由 CSS 隐藏壁纸省电；
-            // 触屏平板（如 iPad）宽度 >768 仍应显示并动态播放。
-            // 这里不因"触屏"禁用动态（否则 iPad 壁纸会卡成静态、切换也失效）。
-            const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-            this.wpCanDynamic = !reducedMotion;
-
-            // 壁纸改为"切换源"制：始终动态播放（除非设备/系统不支持动态）。
-            // 清掉旧版"动/静"切换残留的 static 记忆，避免锁定静态导致切换无效。
-            try { localStorage.removeItem('wallpaper_v2'); } catch (e) { /* ignore */ }
-            this.wpMode = this.wpCanDynamic ? 'dynamic' : 'static';
-
-            console.log('[壁纸] 初始模式:', this.wpMode,
-                '| 系统减少动效:', reducedMotion,
-                '| 视频预加载:', video.preload);
-
-            // 视频事件：真正播放后才渐显；出错/暂停则回落静态帧
-            // 视频事件：真正播放后才渐显；出错/暂停则回落静态帧
-            video.addEventListener('loadstart', () => console.log('[壁纸] loadstart 开始请求视频'));
-            video.addEventListener('progress', () => {
-                if (video.buffered && video.buffered.length) {
-                    console.log('[壁纸] 已缓冲', Math.round(video.buffered.end(video.buffered.length - 1)) + 's / ' + (video.duration ? Math.round(video.duration) + 's' : '?'));
-                }
-            });
-            video.addEventListener('canplay', () => console.log('[壁纸] canplay 已可播放'));
-            video.addEventListener('playing', () => {
-                console.log('[壁纸] 视频播放中');
-                wp.classList.add('playing');
-            });
-            video.addEventListener('pause', () => wp.classList.remove('playing'));
-            video.addEventListener('waiting', () => console.log('[壁纸] waiting 缓冲中...'));
-            video.addEventListener('stalled', () => console.log('[壁纸] stalled 网络停滞'));
-            video.addEventListener('error', () => {
-                console.warn('[壁纸] 视频加载/播放失败，已回退静态帧。错误码:', video.error ? video.error.code : 'unknown');
-                wp.classList.remove('playing');
-                video.pause();
-            });
-
-            this.wpApplyMode(this.wpMode);
-            this.wpUpdateToggle(toggle);
-
-            // 手动切换按钮：循环切换壁纸视频源（bg.mp4 ↔ yh.mp4）
-            toggle.addEventListener('click', () => {
-                this.wpIndex = (this.wpIndex + 1) % this.wallpapers.length;
-                try { localStorage.setItem(this.wpSrcKey, String(this.wpIndex)); } catch (e) { /* ignore */ }
-                this.wpSetVideo();
-                this.wpUpdateToggle(toggle);
-                this.wpToast('已切换到' + this.wallpapers[this.wpIndex].name);
-            });
-
-            // 主题联动：亮色模式由 CSS 隐藏壁纸，同时暂停视频省电；切回暗色恢复
-            const observer = new MutationObserver(() => {
-                const dark = document.documentElement.getAttribute('data-theme') !== 'light';
-                if (dark) this.wpApplyMode(this.wpMode);
-                else video.pause();
-            });
-            observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-
-            // 标签页切到后台时暂停，回到前台恢复
-            document.addEventListener('visibilitychange', () => {
-                const dark = document.documentElement.getAttribute('data-theme') !== 'light';
-                if (document.hidden || !dark) {
-                    video.pause();
-                } else if (this.wpMode === 'dynamic') {
-                    this.wpApplyMode('dynamic');
-                }
-            });
-
-            // 自动播放兜底：浏览器拦截首屏自动播放时，用户任意一次点击/触摸后重试
-            const resume = () => {
-                const dark = document.documentElement.getAttribute('data-theme') !== 'light';
-                if (dark && this.wpMode === 'dynamic' && video.paused && video.error === null) {
-                    this.wpApplyMode('dynamic');
-                }
+            const apply = (animate) => {
+                wp.classList.toggle('wall-alt', this.wpAlt);
+                toggle.title = '切换壁纸（当前：第 ' + (this.wpAlt ? 2 : 1) + ' 张）';
+                toggle.setAttribute('aria-label', toggle.title);
+                if (!animate) return;
+                wp.classList.remove('switching');
+                void wp.offsetWidth; // 强制回流，动画才能重新播放
+                wp.classList.add('switching');
+                setTimeout(() => wp.classList.remove('switching'), 700);
             };
-            document.addEventListener('click', resume, { passive: true });
-            document.addEventListener('touchstart', resume, { passive: true });
 
-            // 系统开了"减少动态效果"时提示原因（仅桌面端、仅提示一次）
-            if (reducedMotion) {
-                this.wpToast('检测到系统「减少动态效果」，壁纸已用静态画面，点右上角按钮可切换动态', 4000);
-            }
+            apply(false);
+
+            toggle.addEventListener('click', () => {
+                this.wpAlt = !this.wpAlt;
+                try { localStorage.setItem(KEY, this.wpAlt ? '1' : '0'); } catch (e) { /* ignore */ }
+                apply(true);
+                this.wpToast('壁纸已切换到第 ' + (this.wpAlt ? 2 : 1) + ' 张');
+            });
+
+            // 空闲时预取另一张（只取当前朝向，不在手机上多跑流量）
+            const warm = () => {
+                const portrait = window.matchMedia('(orientation: portrait)').matches;
+                const img = new Image();
+                img.decoding = 'async';
+                img.src = (portrait ? 'wall-port-' : 'wall-land-') + (this.wpAlt ? 1 : 2) + '.webp';
+            };
+            if ('requestIdleCallback' in window) requestIdleCallback(warm, { timeout: 5000 });
+            else setTimeout(warm, 3000);
         },
 
         // 简易 toast 提示（复用页面底部的 #toast 元素）
@@ -438,60 +487,6 @@ document.addEventListener("DOMContentLoaded", () => {
             toast.classList.add('show');
             if (this._wpToastTimer) clearTimeout(this._wpToastTimer);
             this._wpToastTimer = setTimeout(() => toast.classList.remove('show'), duration || 2000);
-        },
-
-        wpUpdateToggle(toggle) {
-            if (!toggle) return;
-            const w = this.wallpapers[this.wpIndex] || this.wallpapers[0];
-            toggle.title = '切换动态壁纸（当前：' + w.name + '）';
-            toggle.setAttribute('aria-label', toggle.title);
-        },
-
-        // 切换到当前 wpIndex 对应的壁纸视频（动态时播放，静态/亮色时暂停）
-        wpSetVideo() {
-            const wp = document.querySelector('.wallpaper');
-            const video = document.getElementById('bg-video');
-            if (!wp || !video || !this.wallpapers) return;
-            const w = this.wallpapers[this.wpIndex] || this.wallpapers[0];
-            const targetUrl = new URL(w.src, location.href).href;
-            if (video.src !== targetUrl) {
-                video.src = w.src;
-                video.poster = w.poster;
-                video.preload = 'auto';
-                video.load();
-            }
-            const dark = document.documentElement.getAttribute('data-theme') !== 'light';
-            const isDynamic = this.wpMode === 'dynamic' && dark;
-            if (isDynamic) {
-                const p = video.play();
-                if (p && p.catch) p.catch(() => { wp.classList.remove('playing'); video.pause(); });
-            } else {
-                video.pause();
-                wp.classList.remove('playing');
-            }
-        },
-
-        wpApplyMode(mode) {
-            const wp = document.querySelector('.wallpaper');
-            const video = document.getElementById('bg-video');
-            const dark = document.documentElement.getAttribute('data-theme') !== 'light';
-            if (!wp || !video) return;
-            if (!dark) { video.pause(); return; }
-            if (mode === 'dynamic') {
-                if (video.preload !== 'auto') { video.preload = 'auto'; video.load(); }
-                const p = video.play();
-                if (p && p.catch) {
-                    p.catch((err) => {
-                        // 播放被拦截（如自动播放策略）→ 回落静态帧，等用户交互后重试
-                        console.warn('[壁纸] 自动播放被拦截:', err ? err.name : 'unknown', '；点击页面任意位置后会自动重试');
-                        wp.classList.remove('playing');
-                        video.pause();
-                    });
-                }
-            } else {
-                video.pause();
-                wp.classList.remove('playing');
-            }
         },
 
         initLanguage() {
@@ -683,9 +678,12 @@ document.addEventListener("DOMContentLoaded", () => {
             const dict = this.translations[this.currentLang];
             if (this.weatherData === null) return;
             if (this.weatherData.error) {
-                el.innerHTML = `<i class="fa-solid fa-cloud-bolt"></i> ${dict.weatherError}`;
+                // 取不到天气就整行收起，别在首屏挂一句「加载失败」
+                el.style.display = 'none';
+                el.innerHTML = '';
                 return;
             }
+            el.style.display = '';
             const w = this.weatherData;
             const icon = this.weatherEmoji(w.weatherCode, w.isDay);
             const desc = this.weatherDesc(w.weatherCode, this.currentLang);
@@ -697,7 +695,14 @@ document.addEventListener("DOMContentLoaded", () => {
             if (!el) return;
             const dict = this.translations[this.currentLang];
             if (this.visitorCountry === null && !this.weatherData?.error && !this.weatherData) return;
-            const text = this.visitorCountry ? dict.from.replace("{country}", this.visitorCountry) : dict.unknown;
+            // 定位不到就不显示这一行（「你好，陌生人」太像占位符）
+            if (!this.visitorCountry) {
+                el.style.display = 'none';
+                el.innerHTML = '';
+                return;
+            }
+            el.style.display = '';
+            const text = dict.from.replace("{country}", this.visitorCountry);
             el.innerHTML = `<i class="fa-solid fa-location-dot"></i> ${text}`;
         },
 
@@ -904,6 +909,9 @@ document.addEventListener("DOMContentLoaded", () => {
         isMetaLyricLine(text) {
             const t = String(text || '').trim();
             if (/^(作词|作曲|编曲|制作人|制作|监制|混音|录音|母带|后期|和声|配唱|出品|发行|企划|统筹|文案|封面|OP|SP|原曲|原唱|改编|词|曲|编)\s*[:：]/.test(t)) return true;
+            // 通用兜底：短前缀 + 冒号（音乐总监：…、贝斯：…、爱尔兰风笛：… 这类制作名单），
+            // 中文歌词里几乎不会出现「：」，加上前缀限长可避免误伤。
+            if (/^[^\s：:，。！？,.!?]{1,6}\s*[:：]\s*\S/.test(t)) return true;
             // 歌手-歌名 形式的标题行（无冒号、较短、含连字符）
             if (t.length < 40 && /^[\u4e00-\u9fa5A-Za-z0-9]+(\s*[-–—]\s*)[\u4e00-\u9fa5A-Za-z0-9\s()（）、·]+$/.test(t)) return true;
             return false;
@@ -985,11 +993,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     img.src = url;
                 } catch (e) { /* ignore */ }
             }
-            // 歌词：保留作词/作曲/编曲等元数据行，一并显示滚动（元数据行弱化样式）
-            this.currentLyrics = (meta && meta.lyrics) ? this.parseLrc(meta.lyrics) : [];
+            // 歌词：只留正文。作词/作曲/编曲等元数据行不进滚动区，
+            // 否则歌词面板会变成一屏「制作名单」，既占高度又不像播放器。
+            const parsedLyrics = (meta && meta.lyrics) ? this.parseLrc(meta.lyrics) : [];
+            this.currentLyrics = parsedLyrics.filter((l) => !this.isMetaLyricLine(l.text));
             if (this.currentLyrics.length) {
                 lyricsScroll.innerHTML = this.currentLyrics.map((l, i) =>
-                    `<div class="lyrics-line${this.isMetaLyricLine(l.text) ? ' meta' : ''}" data-i="${i}">${this.escapeHtml(l.text)}</div>`).join('');
+                    `<div class="lyrics-line${this.isMetaLyricLine(l.text) ? ' meta' : ''}" data-i="${i}">${
+                        [...l.text].map(ch => `<span class="char">${this.escapeHtml(ch === ' ' ? '\u00A0' : ch)}</span>`).join('')
+                    }</div>`).join('');
                 if (lyricsPlaceholder) lyricsPlaceholder.style.display = 'none';
                 this.lyricLineEls = lyricsScroll.querySelectorAll('.lyrics-line');
                 this._lyricIdx = -1;
@@ -1004,36 +1016,59 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         },
 
-        // 按播放时间高亮当前歌词行并居中滚动
+        // 按播放时间高亮当前歌词行（含逐字卡拉 OK）并居中滚动
         updateLyrics(time) {
             if (!this.currentLyrics || !this.currentLyrics.length) return;
             let idx = 0;
             for (let i = 0; i < this.currentLyrics.length; i++) {
                 if (this.currentLyrics[i].time <= time) idx = i; else break;
             }
-            if (idx === this._lyricIdx) return;
-            this._lyricIdx = idx;
             const scrollEl = document.getElementById('lyrics-scroll');
             const lines = this.lyricLineEls;
             if (!lines || !lines.length) return;
-            lines.forEach(el => el.classList.remove('active'));
-            const active = lines[idx];
-            if (active) {
-                active.classList.add('active');
-                if (scrollEl) {
-                    const target = active.offsetTop - scrollEl.clientHeight / 2 + active.offsetHeight / 2;
-                    const max = scrollEl.scrollHeight - scrollEl.clientHeight;
-                    const top = Math.max(0, Math.min(target, Math.max(max, 0)));
-                    if (typeof scrollEl.scrollTo === 'function') {
-                        scrollEl.scrollTo({ top, behavior: 'smooth' });
-                    } else {
-                        scrollEl.scrollTop = top;
+            if (idx !== this._lyricIdx) {
+                this._lyricIdx = idx;
+                lines.forEach(el => el.classList.remove('active'));
+                const active = lines[idx];
+                if (active) {
+                    active.classList.add('active');
+                    if (scrollEl) {
+                        const target = active.offsetTop - scrollEl.clientHeight / 2 + active.offsetHeight / 2;
+                        const max = scrollEl.scrollHeight - scrollEl.clientHeight;
+                        const top = Math.max(0, Math.min(target, Math.max(max, 0)));
+                        if (typeof scrollEl.scrollTo === 'function') {
+                            scrollEl.scrollTo({ top, behavior: 'smooth' });
+                        } else {
+                            scrollEl.scrollTop = top;
+                        }
                     }
                 }
             }
+            // 逐字卡拉 OK：当前行内按播放进度逐个点亮字符
+            this.updateKaraokeChars(time, idx);
         },
 
-        loadTrack(index, savedTime = 0) {
+        // 当前行逐字点亮：按行播放时间区间线性均分
+        updateKaraokeChars(time, idx) {
+            if (idx < 0) return;
+            const active = this.lyricLineEls && this.lyricLineEls[idx];
+            if (!active) return;
+            const chars = active.querySelectorAll('.char');
+            if (!chars.length) return;
+            const cur = this.currentLyrics[idx];
+            if (!cur) return;
+            const next = this.currentLyrics[idx + 1];
+            const start = cur.time;
+            const end = next ? next.time : start + 4;
+            const dur = Math.max(0.5, end - start);
+            const progress = Math.max(0, Math.min(1, (time - start) / dur));
+            const litCount = Math.floor(progress * chars.length);
+            for (let i = 0; i < chars.length; i++) {
+                chars[i].classList.toggle('lit', i < litCount);
+            }
+        },
+
+        loadTrack(index) {
             const audio = document.getElementById('bg-music');
             const title = document.querySelector('.music-title');
 
@@ -1042,21 +1077,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
             const track = this.playlist[index];
 
-            audio.removeAttribute('type');
             audio.src = track.src;
             title.textContent = track.title;
             audio.preload = 'metadata';
 
             this.loadTrackMeta(index);
-
-            if (savedTime > 0) {
-                if (audio.readyState >= 1) {
-                    audio.currentTime = savedTime;
-                } else {
-                    const seekOnce = () => { audio.currentTime = savedTime; };
-                    audio.addEventListener('loadedmetadata', seekOnce, { once: true });
-                }
-            }
 
             audio.onerror = () => {
                 console.error('Audio load error:', audio.error, 'Source:', track.src);
@@ -1089,7 +1114,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     title: parts[0] ? parts[0].trim() : track.title,
                     artist: '示例用户',
                     album: '示例用户的音乐集',
-                    artwork: [{ src: '1.png', sizes: '512x512', type: 'image/png' }]
+                    artwork: [{ src: 'touxiang.PNG', sizes: '1416x1229', type: 'image/png' }]
                 });
             }
         },
@@ -1097,9 +1122,10 @@ document.addEventListener("DOMContentLoaded", () => {
         saveState() {
             try {
                 const audio = document.getElementById('bg-music');
+                // 只记「听到第几首」和音量；不记播放进度，
+                // 避免下次打开从半首歌开始、或跳转时机不对导致的卡住。
                 localStorage.setItem(this.STORAGE_KEY, JSON.stringify({
                     index: this.currentTrackIndex,
-                    currentTime: audio.currentTime,
                     volume: audio.volume
                 }));
             } catch (e) {
@@ -1126,6 +1152,15 @@ document.addEventListener("DOMContentLoaded", () => {
             const playlistBtn = document.getElementById('playlist-btn');
             const playlistPopup = document.getElementById('playlist-popup');
             const playlistList = document.getElementById('playlist-list');
+
+            const closePlaylist = () => {
+                playlistPopup.classList.remove('show');
+                playlistBtn.setAttribute('aria-expanded', 'false');
+            };
+            const openPlaylist = () => {
+                playlistPopup.classList.add('show');
+                playlistBtn.setAttribute('aria-expanded', 'true');
+            };
 
             const formatTime = (s) => {
                 if (isNaN(s)) return "0:00";
@@ -1174,9 +1209,14 @@ document.addEventListener("DOMContentLoaded", () => {
                     li.className = 'playlist-item';
                     if (i === this.currentTrackIndex) li.classList.add('active');
                     li.innerHTML = `<span><i class="fas fa-play"></i> ${track.title}</span>`;
-                    li.onclick = () => {
+                    li.onclick = (e) => {
+                        // 切歌会重渲染整个列表，被点的 li 随即脱离 DOM；
+                        // 必须阻止冒泡，否则 document 上的「点外部关闭」会因为
+                        // target 已脱离文档而误判。
+                        e.stopPropagation();
+                        // 点歌即播，并立刻收起列表（电脑、手机一致）
                         playTrack(i);
-                        if (window.innerWidth <= 640) playlistPopup.classList.remove('show');
+                        closePlaylist();
                     };
                     playlistList.appendChild(li);
                 });
@@ -1215,23 +1255,26 @@ document.addEventListener("DOMContentLoaded", () => {
 
             playlistBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
-                const open = !playlistPopup.classList.contains('show');
-                playlistPopup.classList.toggle('show', open);
-                playlistBtn.setAttribute('aria-expanded', String(open));
+                playlistPopup.classList.contains('show') ? closePlaylist() : openPlaylist();
             });
 
             document.addEventListener('click', (e) => {
+                // 目标已被重渲染移除时不做判断，避免误关弹窗
+                if (!e.target.isConnected) return;
                 if (playlistBtn && playlistPopup && !playlistBtn.contains(e.target) && !playlistPopup.contains(e.target)) {
-                    playlistPopup.classList.remove('show');
-                    playlistBtn.setAttribute('aria-expanded', 'false');
+                    closePlaylist();
                 }
+            });
+
+            // Esc 收起播放列表
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closePlaylist();
             });
 
             audio.addEventListener('play', () => { updatePlayState(true); this.saveState(); });
             audio.addEventListener('pause', () => { updatePlayState(false); this.saveState(); });
             audio.addEventListener('ended', playNext);
 
-            let lastSave = 0;
             let isDraggingProgress = false;
 
             audio.addEventListener('timeupdate', () => {
@@ -1242,23 +1285,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     currentTimeEl.textContent = formatTime(currentTime);
                     progressBarContainer.setAttribute('aria-valuenow', String(Math.round(currentTime)));
                     progressBarContainer.setAttribute('aria-valuetext', `${formatTime(currentTime)} / ${formatTime(duration)}`);
-                    if (Date.now() - lastSave > 1000) { this.saveState(); lastSave = Date.now(); }
                 }
             });
 
             audio.addEventListener('loadedmetadata', () => {
                 totalTimeEl.textContent = formatTime(audio.duration);
                 progressBarContainer.setAttribute('aria-valuemax', String(Math.round(audio.duration || 0)));
-                let saved = null;
-                try {
-                    saved = JSON.parse(localStorage.getItem(this.STORAGE_KEY));
-                } catch (e) {
-                    console.warn('Failed to parse saved state in loadedmetadata', e);
-                }
-                if (saved?.currentTime) {
-                    currentTimeEl.textContent = formatTime(saved.currentTime);
-                    if (audio.duration) progressBar.style.width = `${(saved.currentTime / audio.duration) * 100}%`;
-                }
+                // 不做进度恢复：每次切歌/刷新都从 0 开始
+                currentTimeEl.textContent = formatTime(0);
+                progressBar.style.width = '0%';
             });
 
             const updateProgressFromEvent = (e) => {
@@ -1321,7 +1356,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     if (volumeSlider) volumeSlider.value = saved.volume;
                     if (volumePercent) volumePercent.textContent = Math.round(saved.volume * 100) + '%';
                 }
-                this.loadTrack(saved.index || 0, saved.currentTime || 0);
+                this.loadTrack(saved.index || 0);
             } else {
                 this.loadTrack(0);
             }

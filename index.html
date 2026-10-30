@@ -1,7 +1,7 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <!--
   雨天 (yutian.me) 个人主页
-  版权所有 © 2026 雨天 · 保留所有权利
+  版权所有 © 2026 示例用户 · 保留所有权利
   源码: https://github.com/xsfnb/myhome
   未经授权，禁止商用、二次修改或移除署名。
 -->
@@ -30,7 +30,7 @@
     <meta property="og:title" content="示例用户 | 动态交互式个人主页">
     <meta property="og:description" content="在线听音乐、了解我的爱好">
     <meta property="og:url" content="https://www.yutian.me/">
-    <meta property="og:image" content="https://www.yutian.me/1.png">
+    <meta property="og:image" content="https://www.yutian.me/touxiang.PNG">
     
     <script type="application/ld+json">
     {
@@ -50,7 +50,7 @@
           "name": "示例用户",
           "alternateName": ["夏海", "Natsuumi"],
           "url": "https://www.yutian.me/",
-          "image": "https://www.yutian.me/1.png",
+          "image": "https://www.yutian.me/touxiang.PNG",
           "email": "example@example.com",
           "mainEntityOfPage": {
             "@id": "https://www.yutian.me/#webpage"
@@ -66,18 +66,42 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
-    <link rel="stylesheet" href="style.css">
+
+    <!-- 关键内联样式：外部 CSS 没更新/加载失败时，顶栏也不会掉到页面左下角变成一行蓝字 -->
+    <style>
+        .top-bar { position: fixed; top: 0; left: 0; right: 0; z-index: 1500;
+                   height: 76px; display: grid; grid-template-columns: 1fr auto 1fr;
+                   align-items: center; padding: 0 2rem; pointer-events: none; }
+        .top-bar > * { pointer-events: auto; }
+        .glass-dock { justify-self: end; }
+        .brand { justify-self: start; display: flex; align-items: baseline; gap: 0.5rem;
+                 text-decoration: none; color: var(--text-primary, #fff); }
+        .brand-cn { font-size: 0.92rem; font-weight: 600; letter-spacing: 0.24em; }
+        .brand-en { font-size: 0.56rem; letter-spacing: 0.4em; color: var(--text-secondary, rgba(255, 255, 255, 0.55)); }
+        @media (max-width: 768px) {
+            .top-bar { height: 64px; grid-template-columns: auto 1fr; padding: 0 1rem; }
+            .brand-en { display: none; }
+        }
+    </style>
+
+    <!-- 带版本号，避免浏览器/CDN 继续用旧样式（改版后不刷新就会错位） -->
+    <link rel="stylesheet" href="style.css?v=20261030e">
     <meta name="msvalidate.01" content="71D36B20BE80AD56889BB11DEECF99B5" />
 </head>
 <body>
     <div class="noise-overlay"></div>
 
-    <!-- 动态壁纸层：仅暗色模式显示；视频为主，智能降级到静态帧 -->
-    <div class="wallpaper" aria-hidden="true">
-        <video id="bg-video" class="bg-video" src="bg.mp4" muted loop playsinline preload="none" poster="bg_0.jpg"></video>
-        <div class="bg-image" style="background-image:url('bg_0.jpg')"></div>
-    </div>
+    <!-- 静态壁纸层：仅暗色模式显示；横屏/竖屏各两张，CSS 按屏幕朝向自动选图 -->
+    <div class="wallpaper" id="wallpaper" aria-hidden="true"></div>
     <div class="wallpaper-overlay" aria-hidden="true"></div>
+
+    <!-- 无 JS / 脚本报错兜底：别让加载动画把整页挡住 -->
+    <noscript>
+        <style>
+            .preloader { display: none !important; }
+            .js .grid-item { opacity: 1 !important; }
+        </style>
+    </noscript>
 
     <!-- 访问加载动画：进度条 + 百分比，完成后左右帷幕分割拉开转场 -->
     <div class="preloader" id="preloader" aria-hidden="true">
@@ -91,21 +115,39 @@
         </div>
     </div>
 
-    <div class="glass-dock controls">
-        <button id="menu-btn" class="control-btn" title="菜单" aria-label="打开菜单" role="button" aria-expanded="false"><i class="fas fa-bars"></i></button>
-        <button id="share-btn" class="control-btn" title="分享" aria-label="分享页面" role="button"><i class="fas fa-share-alt"></i></button>
-        <button id="theme-toggle" class="control-btn" title="切换主题" aria-label="切换主题" role="button"><i class="fas fa-sun"></i></button>
-        <button id="wallpaper-toggle" class="control-btn" title="动态壁纸" aria-label="切换动态壁纸" role="button" aria-pressed="true"><i class="fas fa-film"></i></button>
-        <div class="lang-switcher">
-            <button id="langBtn" class="control-btn" aria-label="切换语言" aria-haspopup="menu" aria-expanded="false" role="button"><i class="fas fa-language"></i></button>
-            <div class="lang-menu" id="langMenu" role="menu">
-                <button data-lang="zh" role="menuitem">简中</button>
-                <button data-lang="zh-TW" role="menuitem">繁中</button>
-                <button data-lang="ja" role="menuitem">日本語</button>
-                <button data-lang="en" role="menuitem">English</button>
+    <!-- 顶部工具条：品牌字标 / 主导航 / 功能按钮，滚动时收成一条发丝线 -->
+    <header class="top-bar" id="topBar">
+        <a class="brand" href="#profile" aria-label="示例用户 · 回到顶部">
+            <span class="brand-cn">示例用户</span>
+            <span class="brand-en">EXAMPLE</span>
+        </a>
+
+        <nav class="top-nav" id="topNav" aria-label="主导航">
+            <a href="#profile" data-nav>主页</a>
+            <a href="#music" data-nav>音乐</a>
+            <a href="#project" data-nav>项目</a>
+            <a href="#contact" data-nav>联系</a>
+        </nav>
+
+        <div class="glass-dock controls">
+            <button id="menu-btn" class="control-btn" title="菜单" aria-label="打开菜单" role="button" aria-expanded="false"><i class="fas fa-bars"></i></button>
+            <button id="share-btn" class="control-btn" title="分享" aria-label="分享页面" role="button"><i class="fas fa-share-alt"></i></button>
+            <button id="theme-toggle" class="control-btn" title="切换主题" aria-label="切换主题" role="button"><i class="fas fa-sun"></i></button>
+            <button id="wallpaper-toggle" class="control-btn" title="切换壁纸" aria-label="切换壁纸" role="button"><i class="fas fa-image"></i></button>
+            <div class="lang-switcher">
+                <button id="langBtn" class="control-btn" aria-label="切换语言" aria-haspopup="menu" aria-expanded="false" role="button"><i class="fas fa-language"></i></button>
+                <div class="lang-menu" id="langMenu" role="menu">
+                    <button data-lang="zh" role="menuitem">简中</button>
+                    <button data-lang="zh-TW" role="menuitem">繁中</button>
+                    <button data-lang="ja" role="menuitem">日本語</button>
+                    <button data-lang="en" role="menuitem">English</button>
+                </div>
             </div>
         </div>
-    </div>
+    </header>
+
+    <!-- 滚动进度条 -->
+    <div class="scroll-progress" id="scrollProgress" aria-hidden="true"></div>
 
     <!-- 全屏导航菜单：点击 MENU 展开 -->
     <div class="fullscreen-menu" id="fullscreenMenu" aria-hidden="true">
@@ -152,6 +194,8 @@
         <!-- 音乐播放器 -->
         <div class="grid-item music-card" id="music">
             <audio id="bg-music" style="display: none;"></audio>
+            <!-- 实时频谱可视化：播放时跳动 -->
+            <canvas class="spectrum" id="spectrum-canvas" aria-hidden="true"></canvas>
             
             <div id="playlist-popup" class="playlist-popup">
                 <div class="playlist-header">播放列表</div>
@@ -264,6 +308,6 @@
 
     <div id="toast" class="toast-notification" role="status" aria-live="polite"></div>
     
-    <script src="script.js"></script>
+    <script src="script.js?v=20261030e"></script>
 </body>
 </html>

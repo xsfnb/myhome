@@ -3,6 +3,8 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 *.tmp
+.vscode/
+.idea/
 
 # 本地临时文件
 .chrome-test-profile/
@@ -19,3 +21,6 @@ dist/
 *.flac
 *.wav
 *.ogg
+
+# 系统生成
+*.zip

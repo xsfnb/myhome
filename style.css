@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * 雨天 (yutian.me) 个人主页样式 - Liquid Glass Design System
  * 版权所有 © 2026 雨天 · 保留所有权利
  * 源码: https://github.com/xsfnb/myhome
@@ -127,52 +127,46 @@ body::after {
   z-index: -1;
 }
 
-/* ========== 动态壁纸（仅暗色模式） ==========
+/* ========== 静态壁纸（仅暗色模式） ==========
    层级：壁纸(-4) → 氛围光斑(-3) → 可读性遮罩(-2) → 边缘压暗(-1) → 内容(z2)
+   横屏 / 竖屏各两张：朝向由 CSS 媒体查询决定，JS 只负责在两张之间切换。
    亮色模式下整体隐藏，保持原有浅色渐变背景。 */
 .wallpaper {
   position: fixed;
   inset: 0;
   z-index: -4;
   overflow: hidden;
-  background: #000;
-}
-
-.wallpaper .bg-video,
-.wallpaper .bg-image {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-/* 层级关键：video 在 DOM 中先于 bg-image，必须用 z-index 让播放中的
-   视频盖住静态帧，否则静态帧会一直挡在视频上面（视频在播却看不见）。 */
-.wallpaper .bg-video {
-  object-fit: cover;
-  opacity: 0;
-  z-index: 1;
-  transition: opacity 0.8s ease;
-}
-
-.wallpaper .bg-image {
+  background-color: #000;
+  background-image: url("wall-land-1.webp");
   background-size: cover;
   background-position: center;
-  z-index: 0;
+  background-repeat: no-repeat;
+  /* 轻微柔化：照片细节太多时毛玻璃卡片上的文字会糊在背景里 */
+  filter: blur(2px);
+  transform: scale(1.02);
 }
 
-/* 视频真正开始播放后才渐显，避免首帧闪烁 */
-.wallpaper.playing .bg-video {
-  opacity: 1;
+/* 竖屏（手机、竖握平板）：换成竖版构图 */
+@media (orientation: portrait) {
+  .wallpaper { background-image: url("wall-port-1.webp"); }
 }
 
-/* 可读性遮罩：保证毛玻璃卡片内的文字清晰 */
+/* 第二张壁纸：类名由 JS 切换，并持久化到 localStorage */
+.wallpaper.wall-alt { background-image: url("wall-land-2.webp"); }
+
+@media (orientation: portrait) {
+  .wallpaper.wall-alt { background-image: url("wall-port-2.webp"); }
+}
+
+/* 可读性遮罩：中心轻、四周重，保证毛玻璃卡片内的文字清晰 */
 .wallpaper-overlay {
   position: fixed;
   inset: 0;
   z-index: -2;
-  background: rgba(0, 0, 0, 0.45);
   pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 35%, rgba(0, 0, 0, 0.12) 0%, rgba(0, 0, 0, 0.40) 65%, rgba(0, 0, 0, 0.72) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.42) 0%, rgba(0, 0, 0, 0.14) 28%, rgba(0, 0, 0, 0.14) 70%, rgba(0, 0, 0, 0.60) 100%);
 }
 
 [data-theme="light"] .wallpaper,
@@ -490,7 +484,7 @@ main.bento-grid {
   gap: 1.5rem;
 }
 
-/* ========== PC（>768px）：暗色主题下全部卡片完全透明，透出完整动态壁纸 ========== */
+/* ========== PC（>768px）：暗色主题下全部卡片完全透明，透出完整壁纸 ========== */
 @media (min-width: 769px) {
   /* 仅暗色主题透明；白色主题恢复原玻璃卡片 */
   [data-theme="dark"] .grid-item {
@@ -540,8 +534,20 @@ main.bento-grid {
     text-shadow: 0 1px 5px rgba(0, 0, 0, 0.85);
   }
 
-  /* 播放列表弹窗、语言菜单：任何主题都保留玻璃（弹窗浮层需可读） */
-  .playlist-popup,
+  /* 播放列表弹窗：浮层要压住下面的播放器，所以不跟卡片一起透明 */
+  .playlist-popup {
+    background: linear-gradient(180deg, #191920 0%, #0d0d12 100%) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+    backdrop-filter: blur(40px) saturate(160%) !important;
+    -webkit-backdrop-filter: blur(40px) saturate(160%) !important;
+  }
+
+  [data-theme="light"] .playlist-popup {
+    background: linear-gradient(180deg, #ffffff 0%, #f6f6fa 100%) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+
+  /* 语言菜单：同样保留玻璃 */
   .lang-menu {
     background: var(--glass-bg) !important;
     backdrop-filter: blur(40px) saturate(180%) !important;
@@ -597,31 +603,12 @@ main.bento-grid {
   transition-duration: 150ms;
 }
 
+/* 工具按钮组：并入顶栏，不再是一枚独立玻璃胶囊 */
 .glass-dock {
-  position: fixed;
-  top: 1.5rem;
-  right: 2rem;
+  justify-self: end;
   display: flex;
-  gap: 0.5rem;
-  padding: 0.6rem;
-  background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
-  border-radius: 100px;
-  backdrop-filter: blur(40px) saturate(180%);
-  -webkit-backdrop-filter: blur(40px) saturate(180%);
-  box-shadow: var(--shadow), 0 0 20px rgba(0,0,0,0.1);
-  z-index: 2000;
-  transition: all var(--duration-fast) var(--spring-smooth);
-}
-
-.glass-dock.shrunk {
-  transform: scale(0.85) translateY(-5px);
-  opacity: 0.6;
-}
-
-.glass-dock:hover {
-  transform: scale(1) translateY(0);
-  opacity: 1;
+  align-items: center;
+  gap: 0.45rem;
 }
 
 .control-btn {
@@ -963,7 +950,7 @@ main.bento-grid {
   justify-content: space-between;
   align-items: center;
   font-size: 0.95rem;
-  transition: all 150ms var(--spring-smooth);
+  transition: background-color 150ms ease, color 150ms ease;
   margin-bottom: 0.25rem;
   font-weight: 500;
   position: relative;
@@ -984,8 +971,7 @@ main.bento-grid {
 }
 
 .playlist-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-  transform: translateX(6px);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .playlist-item:hover::before {
@@ -1150,13 +1136,17 @@ audio {
   box-shadow: inset 0 1px 1px rgba(255,255,255,0.15), 0 8px 20px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.05);
   border: 1px solid var(--glass-border);
   overflow: hidden;
-  transition: all var(--duration-fast) var(--spring-bounce);
+  transition: transform var(--duration-fast) var(--spring-smooth),
+              box-shadow var(--duration-fast) var(--spring-smooth),
+              border-color var(--duration-fast) ease;
 }
 
-.music-card:hover .hobby-icon-container {
-  transform: scale(1.08) translateY(-6px) rotateZ(2deg);
-  box-shadow: inset 0 1px 2px rgba(255,255,255,0.2), 0 20px 40px rgba(0, 122, 255, 0.25), 0 0 0 1px rgba(0, 122, 255, 0.2);
-  border-color: rgba(0, 122, 255, 0.3);
+/* 只有鼠标真的落在封面上才轻微抬升：整卡 hover 时不动，
+   否则鼠标划过播放器 / 播放列表时封面会跟着乱跳。 */
+.hobby-icon-container:hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.2), 0 14px 28px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 /* 正方形专辑封面（不旋转）。加载失败时显示占位渐变。 */
@@ -1175,6 +1165,10 @@ audio {
   object-fit: cover;
   display: block;
 }
+
+/* 没有封面时（src 被移除 / 加载失败）不要显示浏览器的破图图标和 alt 文字，
+   直接露出 .vinyl-record 的渐变底 */
+.vinyl-record .track-cover:not([src]) { display: none; }
 
 /* ========== 常驻歌词区 ========== */
 .lyrics-area {
@@ -1589,21 +1583,21 @@ body:hover .cursor-glow { opacity: 1; }
   .noise-overlay { display: none; }
 }
 
-/* ========== 移动端适配：竖屏强制暗色、隐藏动态壁纸 ========== */
+/* ========== 移动端适配：竖屏强制暗色，壁纸改用竖版构图 ========== */
 @media (max-width: 768px) {
-  /* 移动端不显示动态壁纸（视频/静态帧/遮罩全部隐藏） */
-  .wallpaper,
+  /* 移动端固定暗色主题，主题切换按钮无意义 */
+  #theme-toggle {
+    display: none !important;
+  }
+
+  /* 手机整屏都被壁纸铺满，遮罩略压暗，保证白字可读 */
   .wallpaper-overlay {
-    display: none !important;
+    background:
+      radial-gradient(ellipse at 50% 35%, rgba(0, 0, 0, 0.10) 0%, rgba(0, 0, 0, 0.38) 70%, rgba(0, 0, 0, 0.72) 100%),
+      linear-gradient(180deg, rgba(0, 0, 0, 0.46) 0%, rgba(0, 0, 0, 0.14) 30%, rgba(0, 0, 0, 0.14) 72%, rgba(0, 0, 0, 0.68) 100%);
   }
 
-  /* 移动端固定暗色且无壁纸，隐藏主题切换与壁纸切换按钮 */
-  #theme-toggle,
-  #wallpaper-toggle {
-    display: none !important;
-  }
-
-  /* 移动端背景固定暗色：纯黑 + 光斑氛围，文字白（壁纸未覆盖的部分不至于突兀） */
+  /* 移动端背景兜底：纯黑 + 光斑氛围，文字白 */
   body {
     background: #000 !important;
     color: #fff !important;
@@ -1683,6 +1677,8 @@ body:hover .cursor-glow { opacity: 1; }
   align-items: center;
   justify-content: center;
   gap: 1.1rem;
+  /* 容器不拦截点击，让空白处穿透到背景层触发关闭 */
+  pointer-events: none;
 }
 
 .menu-list a {
@@ -1694,6 +1690,8 @@ body:hover .cursor-glow { opacity: 1; }
   opacity: 0;
   transform: translateY(22px);
   transition: opacity 0.5s ease, transform 0.55s var(--spring-bounce), color 0.2s ease;
+  /* 链接本身可点击 */
+  pointer-events: auto;
 }
 
 .fullscreen-menu.open .menu-list a {
@@ -1724,6 +1722,8 @@ body:hover .cursor-glow { opacity: 1; }
   font-size: 1.2rem;
   cursor: pointer;
   transition: background 0.2s ease, transform 0.2s var(--spring-bounce);
+  /* 置顶，确保不被全屏菜单容器盖住，始终可点 */
+  z-index: 3;
 }
 
 .menu-close:hover {
@@ -1750,4 +1750,353 @@ body:hover .cursor-glow { opacity: 1; }
 .menu-footer a:hover {
   color: var(--accent);
   transform: translateY(-3px);
+}
+
+/* ========== 顶部工具条：字标 / 主导航 / 工具按钮 ========== */
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1500;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  height: 76px;
+  padding: 0 clamp(1.25rem, 3.2vw, 2.75rem);
+  border-bottom: 1px solid transparent;
+  pointer-events: none;
+  transition: transform 0.55s var(--spring-smooth),
+              background 0.4s ease,
+              border-color 0.4s ease,
+              backdrop-filter 0.4s ease;
+}
+
+.top-bar > * { pointer-events: auto; }
+
+/* 滚动后：一条几乎透明的暗色带 + 发丝分隔线，替代原来的玻璃胶囊 */
+.top-bar.scrolled {
+  background: rgba(8, 8, 10, 0.5);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+  border-bottom-color: rgba(255, 255, 255, 0.07);
+}
+
+/* 向下滚动收起，向上滚动露出 */
+.top-bar.hide { transform: translateY(-101%); }
+
+.brand {
+  justify-self: start;
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+.brand-cn {
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+}
+
+.brand-en {
+  font-size: 0.56rem;
+  letter-spacing: 0.4em;
+  color: var(--text-secondary);
+  transform: translateY(-0.1em);
+}
+
+.top-nav {
+  justify-self: center;
+  display: flex;
+  align-items: center;
+  gap: clamp(1.1rem, 2.6vw, 2.4rem);
+}
+
+.top-nav a {
+  position: relative;
+  padding: 0.45rem 0.1rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.35s var(--spring-smooth), opacity 0.35s ease;
+}
+
+/* 当前项：一条从中间长出来的发丝下划线，替代实心高亮块 */
+.top-nav a::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  right: 50%;
+  bottom: 0.12rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.8;
+  transition: left 0.45s var(--spring-smooth), right 0.45s var(--spring-smooth), opacity 0.3s ease;
+}
+
+.top-nav a:hover { color: var(--text-primary); }
+.top-nav a:hover::after { left: 0; right: 0; opacity: 0.35; }
+
+.top-nav a.active { color: var(--text-primary); }
+.top-nav a.active::after {
+  left: 0;
+  right: 0;
+  opacity: 1;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.35);
+}
+
+/* 顶栏里的工具钮：小一号的发丝圆钮 */
+.glass-dock .control-btn {
+  width: 2.15rem;
+  height: 2.15rem;
+  font-size: 0.78rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+.glass-dock .control-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.26);
+  color: #fff;
+  transform: none;
+}
+
+.glass-dock .control-btn:active { transform: scale(0.94); }
+
+[data-theme="light"] .top-bar.scrolled {
+  background: rgba(255, 255, 255, 0.72);
+  border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .glass-dock .control-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: rgba(0, 0, 0, 0.6);
+}
+
+[data-theme="light"] .glass-dock .control-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.18);
+  color: #000;
+}
+
+[data-theme="light"] .top-nav a.active::after { box-shadow: none; }
+
+/* 移动端：留字标 + 工具钮，导航收进全屏菜单 */
+@media (max-width: 768px) {
+  .top-bar {
+    height: 64px;
+    grid-template-columns: auto 1fr;
+    padding: 0 1rem;
+  }
+  .top-nav { display: none; }
+  .brand-en { display: none; }
+  .glass-dock { gap: 0.35rem; }
+  .glass-dock .control-btn { width: 2rem; height: 2rem; font-size: 0.72rem; }
+}
+
+/* ========== 实时频谱可视化 ========== */
+.spectrum {
+  width: 100%;
+  height: 42px;
+  display: block;
+  margin: 0 0 0.75rem;
+  opacity: 0.85;
+}
+
+/* ========== 歌词逐字卡拉 OK ========== */
+.lyrics-line .char {
+  display: inline-block;
+}
+/* 当前行：文字更亮，已唱到的字用强调色 */
+.lyrics-line.active {
+  color: var(--text-primary);
+}
+.lyrics-line.active .char.lit {
+  color: var(--accent);
+}
+
+/* ========== 壁纸切换转场（从右侧擦入，遮住换图的生硬感） ========== */
+.wallpaper.switching {
+  animation: visual-swipe 0.65s var(--spring-smooth);
+}
+@keyframes visual-swipe {
+  from { clip-path: inset(0 0 0 100%); }
+  to { clip-path: inset(0 0 0 0); }
+}
+
+/* ========== 滚动进度条 ========== */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 3px;
+  width: 0;
+  background: linear-gradient(90deg, var(--accent), #5ac8fa);
+  z-index: 5000;
+  pointer-events: none;
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* ============================================================
+   高级感微调（2026-10-30）
+   只动视觉层：发丝线、收窄留白、降低色彩噪音，不改结构。
+   ============================================================ */
+
+/* 顶栏留白：内容不再被导航与工具钮压住 */
+body { padding-top: 6.5rem; }
+
+/* 卡片：圆角收小、描边变淡、内边距收紧 */
+.grid-item {
+  border-radius: 1.5rem;
+  padding: 1.5rem;
+}
+
+[data-theme="dark"] .grid-item {
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.18) !important;
+}
+
+/* 小标题：更像杂志栏目名 */
+.section-title {
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  opacity: 0.72;
+}
+
+/* 名字：主视觉放大，字距收紧（仅桌面，移动端保留原尺寸） */
+@media (min-width: 769px) {
+  .name {
+    font-size: clamp(2.4rem, 3.4vw, 3rem);
+    letter-spacing: 0.02em;
+  }
+}
+
+/* 邮箱：从实心蓝胶囊改成发丝描边的幽灵按钮 */
+.email {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow: none;
+  padding: 0.8rem 2rem;
+  font-size: 0.88rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  color: var(--text-primary);
+}
+
+.email::before { display: none; }
+
+.email:hover {
+  transform: none;
+  background: rgba(255, 255, 255, 0.11);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+}
+
+[data-theme="light"] .email {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.12);
+}
+
+[data-theme="light"] .email:hover {
+  background: rgba(0, 0, 0, 0.06);
+  border-color: rgba(0, 0, 0, 0.2);
+}
+
+/* 统计条更紧凑 */
+.stat-item {
+  padding: 0.65rem 0.9rem;
+  gap: 0.85rem;
+}
+
+/* 歌词区收窄，让「项目」能进入首屏 */
+.lyrics-area {
+  height: 9em;
+  margin-top: 1rem;
+}
+
+/* 项目区：内容列放宽一点，标题与条目左边缘对齐 */
+.project-text { max-width: 44rem; }
+
+/* 锚点跳转时给固定顶栏留出空间 */
+.grid-item { scroll-margin-top: 6.5rem; }
+
+/* 进度条：细一点，别抢顶栏的戏 */
+.scroll-progress {
+  height: 1px;
+  opacity: 0.7;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.1), var(--accent) 40%, #5ac8fa);
+  box-shadow: none;
+}
+
+/* 桌面暗色：歌词不再套一个内嵌面板，直接浮在壁纸上，和整卡的通透感一致 */
+@media (min-width: 769px) {
+  [data-theme="dark"] .lyrics-area {
+    background: transparent;
+    border-color: transparent;
+  }
+}
+
+/* 头像：光晕放慢、浮动收敛，去掉「炫技感」 */
+.avatar-container::before {
+  opacity: 0.3;
+  filter: blur(16px);
+  animation-duration: 14s;
+}
+
+.avatar-container::after {
+  opacity: 0.16;
+  animation-duration: 20s;
+}
+
+.avatar-img { animation-duration: 9s; }
+
+@keyframes avatar-float {
+  0%, 100% { transform: translateY(0) rotateZ(0deg); }
+  50% { transform: translateY(-4px) rotateZ(0.3deg); }
+}
+
+/* 滚动提示：一根安静的小箭头，滚过首屏就淡出 */
+.scroll-indicator {
+  position: fixed;
+  left: 50%;
+  bottom: 26px;
+  transform: translateX(-50%);
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.45;
+  transition: opacity 0.6s ease;
+}
+
+.scroll-indicator.is-hidden { opacity: 0; }
+
+.scroll-arrow {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  animation: scrollBounce 2.6s ease-in-out infinite;
+}
+
+@keyframes scrollBounce {
+  0%, 100% { transform: translateY(0); opacity: 0.45; }
+  50% { transform: translateY(5px); opacity: 1; }
+}
+
+@media (max-width: 640px) {
+  body { padding-top: 5.25rem; }
+  .grid-item { border-radius: 1.25rem; }
+  .lyrics-area { height: 8.5em; }
+}
+
+/* 手机上内容本来就明显可滚，去掉这颗小箭头更干净 */
+@media (max-width: 768px) {
+  .scroll-indicator { display: none; }
 }
