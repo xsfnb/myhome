@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * 雨天 (yutian.me) 个人主页交互脚本
  * 版权所有 © 2026 雨天 · 保留所有权利
  * 源码: https://github.com/xsfnb/myhome
@@ -951,7 +951,9 @@ document.addEventListener("DOMContentLoaded", () => {
             }).catch(err => {
                 console.warn('[封面/歌词] 加载失败:', err);
                 if (lyricsPlaceholder) {
-                    lyricsPlaceholder.textContent = '封面/歌词加载失败（本地 file:// 预览不支持，部署后可用）';
+                    lyricsPlaceholder.textContent = location.protocol === 'file:'
+                        ? '封面/歌词加载失败：file:// 预览不支持，请用本地 http 服务打开'
+                        : '未读到封面/歌词：音频文件缺失，或文件里没有写入封面与歌词标签';
                     lyricsPlaceholder.style.display = 'flex';
                 }
             });
@@ -1114,7 +1116,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         const nextIndex = (this.currentTrackIndex + 1) % this.playlist.length;
                         if (nextIndex !== this.currentTrackIndex) this.loadTrack(nextIndex);
                     }
-                }, 3000);
+                }, 1500);
             };
 
             audio.oncanplay = () => {
