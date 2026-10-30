@@ -1,18 +1,21 @@
-Copyright (c) 2026 雨天 (yutian.me). All rights reserved.
-版权所有 © 2026 雨天 · 保留所有权利
+MIT License
 
-本仓库中的全部内容——包括但不限于源代码（HTML / CSS / JavaScript）、文字、
-图像、壁纸、截图与视觉设计——均受著作权法保护，未经作者书面授权，任何人不得：
+Copyright (c) 2026 雨天 (yutian.me)
 
-1. 将上述内容用于任何商业用途或盈利目的；
-2. 对源代码进行改编、重制、再创作，或将衍生作品公开发布；
-3. 移除、遮蔽或篡改作者署名与原始出处链接。
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
 
-允许的行为：
-- 个人学习、浏览本页面；
-- 在完整保留本版权声明与出处链接（https://github.com/xsfnb/myhome）的前提下，
-  分享、转发页面链接；
-- 通过 Issue / Pull Request 提出改进建议。
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-需要商用、二次修改或改编授权，请通过 https://github.com/xsfnb/myhome/issues
-联系作者。未经许可使用，作者保留追究法律责任的权利。
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

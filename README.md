@@ -6,7 +6,7 @@
   <a href="https://www.yutian.me"><img alt="在线预览" src="https://img.shields.io/badge/DEMO-yutian.me-0071e3?style=flat-square"></a>
   <img alt="无框架" src="https://img.shields.io/badge/HTML%20%2B%20CSS%20%2B%20JS-无框架、无构建-111111?style=flat-square">
   <img alt="体积" src="https://img.shields.io/badge/首屏-约 250KB-34c759?style=flat-square">
-  <a href="#版权与许可"><img alt="许可" src="https://img.shields.io/badge/License-All%20Rights%20Reserved-lightgrey?style=flat-square"></a>
+  <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-MIT-3da639?style=flat-square"></a>
 </p>
 
 ![主页截图](screenshots/screenshot-1.webp)
@@ -136,11 +136,13 @@ playlist: [
 这是刻意的。播放进度记忆恢复时容易跳时间、卡在缓冲，所以只记「第几首」和音量。
 
 **Q：能直接拿去当自己的主页吗？**
-可以看、可以学、可以按 README 改，但**公开发布前请先看下面的许可条款**。
+可以。代码是 MIT，随便改、随便用；但头像、壁纸、截图这些内容素材版权归作者，请换成你自己的再发布。
 
 ## 📝 更新日志
 
 **2026-10（v2）**
+
+- 代码改为 MIT 许可（内容素材仍为作者所有）
 
 - 动态视频壁纸 → 静态双图壁纸（横/竖各两张，按朝向切换）
 - 顶栏重做：字标 + 发丝下划线导航 + 圆形工具钮，滚动收起
@@ -150,19 +152,16 @@ playlist: [
 
 **更早**：Bento Grid + Liquid Glass 初版、四语言、歌词逐字点亮、MediaSession。
 
-## 📄 版权与许可
+## 📄 许可
 
-本项目为 **雨天 (yutian.me)** 的个人原创作品，**保留所有权利 (All Rights Reserved)**。未经授权，任何人不得：
+| 范围 | 许可 |
+|---|---|
+| **代码**（HTML / CSS / JavaScript） | [MIT](LICENSE) — 可以自由使用、修改、商用，保留版权声明即可 |
+| **内容**（头像、壁纸、截图、文案、视觉设计） | © 2026 雨天，保留所有权利；转载或引用请保留署名与出处 |
 
-- ⛔ **商用** — 不得将本站源码、文字、图片或设计用于任何商业用途或盈利目的。
-- ⛔ **二次修改 / 衍生** — 不得对源码进行改编、重制、再创作并公开发布（禁止衍生作品）。
-- ⛔ **移除署名** — 转载、引用、分享时必须保留作者署名「雨天」及原始出处 <https://github.com/xsfnb/myhome>。
+项目名「雨天 / yutian.me」与头像不在代码授权范围内，二次使用时请替换成你自己的。
 
-**允许**：个人学习与浏览；在完整保留版权声明与出处链接的前提下分享页面链接；通过 Issue / PR 提出改进建议。
-
-**需要商用、二创或改编**：请先通过 [Issue](https://github.com/xsfnb/myhome/issues) 联系作者取得书面授权。未经许可使用，作者保留追究责任的权利。
-
-> 本声明对页面全部内容（代码、文字、图像与设计）均生效。
+如果这个项目帮到了你，欢迎在 [Issues](https://github.com/xsfnb/myhome/issues) 留言，或者直接点个 Star。
 
 ## ⭐ Star History
 
