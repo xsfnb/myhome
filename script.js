@@ -1,4 +1,4 @@
-/*!
+﻿/*!
  * 雨天 (yutian.me) 个人主页交互脚本
  * 版权所有 © 2026 雨天 · 保留所有权利
  * 源码: https://github.com/xsfnb/myhome
@@ -1138,6 +1138,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const dur = Math.max(0.5, end - start);
             const progress = Math.max(0, Math.min(1, (time - start) / dur));
             const litCount = Math.floor(progress * chars.length);
+            // 每帧都写 classList 太浪费，只有点亮数变化时才动 DOM
+            const key = `${idx}:${litCount}`;
+            if (this._karaokeKey === key) return;
+            this._karaokeKey = key;
             for (let i = 0; i < chars.length; i++) {
                 chars[i].classList.toggle('lit', i < litCount);
             }
@@ -1367,11 +1371,29 @@ document.addEventListener("DOMContentLoaded", () => {
             audio.addEventListener('pause', () => { updatePlayState(false); this.saveState(); });
             audio.addEventListener('ended', playNext);
 
+            // 歌词跟着音频时钟走 rAF，而不是依赖 timeupdate（后者约 4 次/秒，
+            // 高亮最多会晚 250ms，听感就是「歌词比人声慢」）。
+            let lyricRaf = 0;
+            const tickLyrics = () => {
+                this.updateLyrics(audio.currentTime);
+                lyricRaf = requestAnimationFrame(tickLyrics);
+            };
+            audio.addEventListener('play', () => {
+                if (!lyricRaf) lyricRaf = requestAnimationFrame(tickLyrics);
+            });
+            const stopLyricRaf = () => {
+                if (lyricRaf) { cancelAnimationFrame(lyricRaf); lyricRaf = 0; }
+                this.updateLyrics(audio.currentTime);
+            };
+            audio.addEventListener('pause', stopLyricRaf);
+            audio.addEventListener('seeked', () => this.updateLyrics(audio.currentTime));
+            audio.addEventListener('ended', stopLyricRaf);
+
             let isDraggingProgress = false;
 
             audio.addEventListener('timeupdate', () => {
                 const { currentTime, duration } = audio;
-                this.updateLyrics(currentTime);
+                if (audio.paused) this.updateLyrics(currentTime);
                 if (duration) {
                     if (!isDraggingProgress) progressBar.style.width = `${(currentTime / duration) * 100}%`;
                     currentTimeEl.textContent = formatTime(currentTime);

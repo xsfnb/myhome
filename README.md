@@ -7,6 +7,7 @@
   <img alt="无框架" src="https://img.shields.io/badge/HTML%20%2B%20CSS%20%2B%20JS-无框架、无构建-111111?style=flat-square">
   <img alt="体积" src="https://img.shields.io/badge/首屏-约 250KB-34c759?style=flat-square">
   <a href="LICENSE"><img alt="License" src="https://img.shields.io/badge/License-MIT-3da639?style=flat-square"></a>
+  <a href="https://github.com/xsfnb/myhome/releases"><img alt="Release" src="https://img.shields.io/github/v/release/xsfnb/myhome?style=flat-square&color=0071e3"></a>
 </p>
 
 ![主页截图](screenshots/screenshot-1.webp)
@@ -139,6 +140,10 @@ playlist: [
 可以。代码是 MIT，随便改、随便用；但头像、壁纸、截图这些内容素材版权归作者，请换成你自己的再发布。
 
 ## 📝 更新日志
+
+**2026-11-15**
+
+- 歌词同步：改用 rAF 跟随音频时钟，高亮延迟 0.19s → 0.04s；高亮过渡 0.35s → 0.18s
 
 **2026-11**
 

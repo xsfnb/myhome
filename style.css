@@ -1212,7 +1212,7 @@ audio {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  transition: color 0.35s ease, opacity 0.35s ease;
+  transition: color 0.18s ease, opacity 0.18s ease;
 }
 
 .lyrics-line.active {
