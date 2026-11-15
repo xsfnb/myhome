@@ -1,4 +1,4 @@
-﻿/*!
+/*!
  * 雨天 (yutian.me) 个人主页样式 - Liquid Glass Design System
  * 版权所有 © 2026 雨天 · 保留所有权利
  * 源码: https://github.com/xsfnb/myhome
@@ -2099,4 +2099,137 @@ body { padding-top: 6.5rem; }
 /* 手机上内容本来就明显可滚，去掉这颗小箭头更干净 */
 @media (max-width: 768px) {
   .scroll-indicator { display: none; }
+}
+
+/* ============================================================
+   2026 动效升级：参考近一年 Awwwards 获奖站点与 2026 动画趋势
+   1) 双元素自定义光标   2) 主题切换 View Transition 圆形揭示
+   3) 卡片聚焦（悬停一张，其余压暗）  4) 名字模糊入场
+   5) 壁纸视差   6) 微交互收尾
+   全部尊重 prefers-reduced-motion。
+   ============================================================ */
+
+/* ---------- 1. 自定义光标 ---------- */
+html.has-cursor,
+html.has-cursor * {
+  cursor: none !important;
+}
+
+.cursor-dot,
+.cursor-ring {
+  position: fixed;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  pointer-events: none;
+  will-change: transform;
+  z-index: 10000;
+}
+
+.cursor-dot {
+  width: 6px;
+  height: 6px;
+  background: #fff;
+  mix-blend-mode: difference;
+  transition: opacity 0.25s ease;
+}
+
+.cursor-ring {
+  width: 34px;
+  height: 34px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  transition: width 0.3s var(--spring-smooth),
+              height 0.3s var(--spring-smooth),
+              border-color 0.3s ease,
+              background-color 0.3s ease,
+              opacity 0.25s ease;
+}
+
+/* 悬停可交互元素：外圈放大 + 填充一点玻璃感 */
+.cursor-ring.is-active {
+  width: 62px;
+  height: 62px;
+  border-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.08);
+}
+
+html:not(.has-cursor) .cursor-dot,
+html:not(.has-cursor) .cursor-ring { display: none; }
+
+@media (hover: none), (pointer: coarse) {
+  .cursor-dot, .cursor-ring { display: none !important; }
+  html.has-cursor, html.has-cursor * { cursor: auto !important; }
+}
+
+/* ---------- 2. 主题切换：从按钮扩散的圆形揭示 ---------- */
+::view-transition-old(root) { animation: none; }
+
+::view-transition-new(root) {
+  animation: vt-circle 0.62s var(--spring-smooth) both;
+}
+
+@keyframes vt-circle {
+  from { clip-path: circle(0px at var(--vt-x, 50%) var(--vt-y, 50%)); }
+  to   { clip-path: circle(var(--vt-r, 75vmax) at var(--vt-x, 50%) var(--vt-y, 50%)); }
+}
+
+/* ---------- 3. 卡片聚焦 ---------- */
+@media (hover: hover) and (pointer: fine) {
+  .grid-item {
+    transition: opacity 0.45s var(--spring-smooth),
+                box-shadow 0.3s var(--spring-smooth),
+                border-color 0.15s ease,
+                transform 0.1s ease-out;
+  }
+
+  /* 悬停某张卡时，其余卡片轻微退后 */
+  .bento-grid:has(.grid-item:hover) .grid-item:not(:hover) {
+    opacity: 0.55;
+  }
+}
+
+/* ---------- 4. 名字逐字：模糊 + 位移 ---------- */
+.name .char { filter: blur(14px); }
+
+.name.split.in .char {
+  filter: blur(0);
+  transition: opacity 0.5s ease,
+              transform 0.62s var(--spring-bounce),
+              filter 0.7s ease;
+}
+
+/* ---------- 5. 壁纸视差 ---------- */
+.wallpaper {
+  /* scale 留出余量，视差最多偏移 26px，不会露出黑边 */
+  transform: translate3d(0, var(--wp-shift, 0px), 0) scale(1.06);
+  will-change: transform;
+}
+
+/* ---------- 6. 微交互收尾 ---------- */
+/* 入场：位移收小、加一点失焦，落位更「稳」 */
+@keyframes reveal-in {
+  from { opacity: 0; transform: translateY(30px) scale(0.985); filter: blur(7px); }
+  to   { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+
+/* 播放列表项：悬停时左侧强调条轻轻拉长 */
+.playlist-item::before {
+  transition: transform 0.28s var(--spring-smooth);
+}
+
+/* 项目链接：箭头在悬停时前移，文字略微提亮 */
+.project-link .project-arrow {
+  transition: transform 0.35s var(--spring-smooth), opacity 0.3s ease;
+}
+
+.project-link:hover .project-arrow {
+  transform: translateX(5px);
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cursor-ring { transition: none; }
+  .grid-item { transition: none; }
+  .wallpaper { transform: scale(1.02); }
+  ::view-transition-new(root) { animation: none; }
 }

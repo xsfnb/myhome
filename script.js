@@ -1,4 +1,4 @@
-﻿/*!
+/*!
  * 雨天 (yutian.me) 个人主页交互脚本
  * 版权所有 © 2026 雨天 · 保留所有权利
  * 源码: https://github.com/xsfnb/myhome
@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
         playlist: [
             { src: '梁博 - 出现又离开 (Live).mp3', title: '出现又离开 (Live) - 梁博' },
             { src: '莫文蔚 - 盛夏的果实.flac', title: '盛夏的果实 - 莫文蔚' },
-            { src: '孙建平 Sweet Style - 我记得你眼里的依恋.mp3', title: '我记得你眼里的依恋 - 孙建平 Sweet Style' },
+            { src: '于果 - 侧脸.flac', title: '侧脸 - 于果' },
             { src: '赵雷 - 画.flac', title: '画 - 赵雷' }
         ],
         currentTrackIndex: 0,
@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
             this.initSpatialEngine();
             this.initTheme();
             this.initWallpaper();
+            this.initParallax();
             this.initLanguage();
             this.initSharing();
             this.initScrollIndicator();
@@ -158,6 +159,26 @@ document.addEventListener("DOMContentLoaded", () => {
             update();
         },
 
+        // 壁纸轻微视差：滚动时背景比内容慢半拍，制造纵深感
+        initParallax() {
+            const wp = document.getElementById('wallpaper');
+            if (!wp) return;
+            if (window.matchMedia('(hover: none)').matches) return;
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+            let raf = 0;
+            const update = () => {
+                raf = 0;
+                // 上限 26px，配合 CSS 里的 scale 余量，不会露出黑边
+                const shift = Math.min(window.scrollY * 0.06, 26);
+                wp.style.setProperty('--wp-shift', `${shift.toFixed(2)}px`);
+            };
+            window.addEventListener('scroll', () => {
+                if (!raf) raf = requestAnimationFrame(update);
+            }, { passive: true });
+            update();
+        },
+
         // ========== 空间交互引擎 ==========
         initSpatialEngine() {
             const isTouch = window.matchMedia('(pointer: coarse)').matches;
@@ -219,17 +240,50 @@ document.addEventListener("DOMContentLoaded", () => {
             });
         },
 
+        // 自定义光标：小圆点跟手 + 外圈延迟跟随，悬停可交互元素时放大
+        // （2026 获奖站点常见的「双元素光标」，只在有精确指针的设备启用）
         initCursorGlow() {
-            const glow = document.createElement('div');
-            glow.className = 'cursor-glow';
-            document.body.appendChild(glow);
-            let tx = 0, ty = 0, cx = 0, cy = 0;
-            document.addEventListener('mousemove', (e) => { tx = e.clientX; ty = e.clientY; }, { passive: true });
+            // 只有「有鼠标」的设备才启用（触屏设备保持系统光标）
+            if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+            const dot = document.createElement('div');
+            const ring = document.createElement('div');
+            dot.className = 'cursor-dot';
+            ring.className = 'cursor-ring';
+            document.body.append(dot, ring);
+
+            // 先停在屏幕外，等第一次真实移动再显示，
+            // 否则刷新瞬间会在视口正中出现一个孤零零的光标圈。
+            let mx = -100, my = -100;
+            let rx = mx, ry = my;
+            let armed = false;
+
+            document.addEventListener('mousemove', (e) => {
+                mx = e.clientX;
+                my = e.clientY;
+                if (!armed) {
+                    armed = true;
+                    rx = mx;
+                    ry = my;
+                    document.documentElement.classList.add('has-cursor');
+                }
+            }, { passive: true });
+
+            const INTERACTIVE = 'a, button, .playlist-item, .project-link, .hobby-icon-container, input, .control-btn';
+            document.addEventListener('mouseover', (e) => {
+                if (e.target.closest && e.target.closest(INTERACTIVE)) ring.classList.add('is-active');
+            }, { passive: true });
+            document.addEventListener('mouseout', (e) => {
+                if (e.target.closest && e.target.closest(INTERACTIVE)) ring.classList.remove('is-active');
+            }, { passive: true });
+
             const animate = () => {
-                cx += (tx - cx) * 0.08;
-                cy += (ty - cy) * 0.08;
-                // transform 走合成层，避免 left/top 触发每帧布局重排
-                glow.style.transform = `translate3d(${cx}px, ${cy}px, 0) translate(-50%, -50%)`;
+                dot.style.transform = `translate3d(${mx}px, ${my}px, 0) translate(-50%, -50%)`;
+                // 外圈用缓动跟随，形成轻微的「拖尾」手感
+                rx += (mx - rx) * 0.16;
+                ry += (my - ry) * 0.16;
+                ring.style.transform = `translate3d(${rx}px, ${ry}px, 0) translate(-50%, -50%)`;
                 requestAnimationFrame(animate);
             };
             animate();
@@ -418,7 +472,7 @@ document.addEventListener("DOMContentLoaded", () => {
             this.themeToggle = document.getElementById('theme-toggle');
             this.themeToggle.addEventListener('click', () => {
                 const t = (localStorage.getItem('theme') || 'dark') === 'light' ? 'dark' : 'light';
-                this.applyTheme(t);
+                this.applyTheme(t, true);
             });
             const saved = localStorage.getItem('theme');
             const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -427,12 +481,31 @@ document.addEventListener("DOMContentLoaded", () => {
             this.applyTheme(isMobile ? 'dark' : (saved || (prefersDark ? 'dark' : 'light')));
         },
 
-        applyTheme(theme) {
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-            this.themeToggle.innerHTML = `<i class="fas ${theme === 'light' ? 'fa-moon' : 'fa-sun'}"></i>`;
-            const meta = document.getElementById('theme-color-meta');
-            if (meta) meta.setAttribute('content', theme === 'light' ? '#f2f2f7' : '#000000');
+        applyTheme(theme, animate = false) {
+            const commit = () => {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+                this.themeToggle.innerHTML = `<i class="fas ${theme === 'light' ? 'fa-moon' : 'fa-sun'}"></i>`;
+                const meta = document.getElementById('theme-color-meta');
+                if (meta) meta.setAttribute('content', theme === 'light' ? '#f2f2f7' : '#000000');
+            };
+
+            const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            if (!animate || reduce || typeof document.startViewTransition !== 'function') {
+                commit();
+                return;
+            }
+
+            // View Transition：从按钮位置扩散的圆形揭示，替代整页硬切
+            const rect = this.themeToggle.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+            const root = document.documentElement;
+            root.style.setProperty('--vt-x', `${x}px`);
+            root.style.setProperty('--vt-y', `${y}px`);
+            root.style.setProperty('--vt-r', `${radius}px`);
+            document.startViewTransition(commit);
         },
 
         // ========== 静态壁纸（横/竖屏各两张，仅暗色模式显示） ==========
